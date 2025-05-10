@@ -6,6 +6,7 @@ import MetricCard from "./MetricCard";
 import StudentCard from "./StudentCard";
 import StudentDetailModal from "./StudentDetailModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 
 interface ClassroomDashboardProps {
   classroomId: string;
@@ -13,7 +14,12 @@ interface ClassroomDashboardProps {
 
 const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
   const [students, setStudents] = useState<Student[]>([]);
-  const [metrics, setMetrics] = useState<ClassroomMetrics>({
+  const [metrics, setMetrics] = useState<{
+    totalEngagement: number;
+    averageAttention: number;
+    activeStudents: number;
+    sessionDuration: number;
+  }>({
     totalEngagement: 0,
     averageAttention: 0,
     activeStudents: 0,
@@ -22,6 +28,7 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadData = async () => {
@@ -32,13 +39,20 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
         setMetrics(data.metrics);
       } catch (error) {
         console.error("Failed to load classroom data", error);
+        toast({
+          variant: "destructive",
+          title: "Error loading classroom data",
+          description: "Please check your connection and try again."
+        });
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadData();
-  }, [classroomId]);
+    if (classroomId) {
+      loadData();
+    }
+  }, [classroomId, toast]);
 
   const handleStudentClick = (student: Student) => {
     setSelectedStudent(student);
@@ -49,15 +63,59 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
     setIsModalOpen(false);
   };
 
-  // Generate mock chart data
-  const chartData = Array.from({ length: 12 }, (_, i) => {
-    const date = new Date();
-    date.setMinutes(date.getMinutes() - (11 - i) * 5);
-    return {
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      value: Math.floor(Math.random() * 30) + (metrics.averageAttention - 15),
-    };
-  });
+  // Generate chart data based on students' average attention
+  const generateChartData = () => {
+    // Use the first student's activity history as a template if available
+    if (students.length > 0 && students[0]?.metrics?.activityHistory?.length > 0) {
+      return students[0].metrics.activityHistory.map((item, index) => {
+        // Calculate the average attention value across all students for this timestamp
+        const averageValue = students.reduce((sum, student) => {
+          const activityItem = student.metrics.activityHistory[index];
+          return sum + (activityItem ? activityItem.value : 0);
+        }, 0) / students.length;
+
+        return {
+          time: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          value: Math.round(averageValue),
+        };
+      });
+    }
+    
+    // Fallback to generic data if no students or activity history
+    return Array.from({ length: 12 }, (_, i) => {
+      const date = new Date();
+      date.setMinutes(date.getMinutes() - (11 - i) * 5);
+      return {
+        time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        value: Math.floor(Math.random() * 30) + (metrics.averageAttention - 15),
+      };
+    });
+  };
+
+  // Aggregate focus areas across all students
+  const generateAggregatedFocusAreas = () => {
+    const focusAreaMap: Record<string, number[]> = {};
+    
+    students.forEach(student => {
+      student.metrics.focusAreas.forEach(area => {
+        if (!focusAreaMap[area.area]) {
+          focusAreaMap[area.area] = [];
+        }
+        focusAreaMap[area.area].push(area.percentage);
+      });
+    });
+    
+    return Object.entries(focusAreaMap)
+      .map(([area, percentages]) => ({
+        area,
+        percentage: Math.round(percentages.reduce((sum, val) => sum + val, 0) / percentages.length)
+      }))
+      .sort((a, b) => b.percentage - a.percentage)
+      .slice(0, 4); // Take top 4 focus areas
+  };
+
+  const chartData = generateChartData();
+  const focusAreas = generateAggregatedFocusAreas();
 
   return (
     <div className="flex-1 p-6 overflow-auto">
@@ -127,42 +185,37 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
             <CardTitle>Focus Areas</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Visual Content</span>
-                <span className="font-medium">78%</span>
-              </div>
-              <div className="h-2 bg-vr-light-gray rounded-full overflow-hidden">
-                <div className="h-full bg-vr-purple rounded-full" style={{ width: "78%" }} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Interactive Elements</span>
-                <span className="font-medium">65%</span>
-              </div>
-              <div className="h-2 bg-vr-light-gray rounded-full overflow-hidden">
-                <div className="h-full bg-vr-dark-purple rounded-full" style={{ width: "65%" }} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>3D Models</span>
-                <span className="font-medium">82%</span>
-              </div>
-              <div className="h-2 bg-vr-light-gray rounded-full overflow-hidden">
-                <div className="h-full bg-vr-blue rounded-full" style={{ width: "82%" }} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Audio Content</span>
-                <span className="font-medium">45%</span>
-              </div>
-              <div className="h-2 bg-vr-light-gray rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-500 rounded-full" style={{ width: "45%" }} />
-              </div>
-            </div>
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between">
+                    <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
+                    <div className="h-4 bg-muted rounded w-12 animate-pulse"></div>
+                  </div>
+                  <div className="h-2 bg-muted rounded-full animate-pulse"></div>
+                </div>
+              ))
+            ) : (
+              focusAreas.map((focusArea, index) => (
+                <div key={index} className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>{focusArea.area}</span>
+                    <span className="font-medium">{focusArea.percentage}%</span>
+                  </div>
+                  <div className="h-2 bg-vr-light-gray rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${
+                        index === 0 ? "bg-vr-purple" :
+                        index === 1 ? "bg-vr-dark-purple" :
+                        index === 2 ? "bg-vr-blue" :
+                        "bg-yellow-500"
+                      }`}
+                      style={{ width: `${focusArea.percentage}%` }}
+                    />
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

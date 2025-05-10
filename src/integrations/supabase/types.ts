@@ -9,6 +9,114 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      activity_history: {
+        Row: {
+          id: number
+          student_id: string
+          timestamp: number
+          value: number
+        }
+        Insert: {
+          id?: number
+          student_id: string
+          timestamp: number
+          value: number
+        }
+        Update: {
+          id?: number
+          student_id?: string
+          timestamp?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_history_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classroom_metrics: {
+        Row: {
+          active_students: number
+          average_attention: number
+          classroom_id: string
+          id: number
+          session_duration: number
+          total_engagement: number
+        }
+        Insert: {
+          active_students?: number
+          average_attention?: number
+          classroom_id: string
+          id?: number
+          session_duration?: number
+          total_engagement?: number
+        }
+        Update: {
+          active_students?: number
+          average_attention?: number
+          classroom_id?: string
+          id?: number
+          session_duration?: number
+          total_engagement?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classroom_metrics_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: true
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classrooms: {
+        Row: {
+          id: string
+          name: string
+        }
+        Insert: {
+          id: string
+          name: string
+        }
+        Update: {
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      focus_areas: {
+        Row: {
+          area: string
+          id: number
+          percentage: number
+          student_id: string
+        }
+        Insert: {
+          area: string
+          id?: number
+          percentage?: number
+          student_id: string
+        }
+        Update: {
+          area?: string
+          id?: number
+          percentage?: number
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "focus_areas_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       logs: {
         Row: {
           id: number
@@ -23,6 +131,129 @@ export type Database = {
           time?: string
         }
         Relationships: []
+      }
+      menu_interactions: {
+        Row: {
+          count: number
+          id: number
+          menu_type: string
+          student_id: string
+        }
+        Insert: {
+          count?: number
+          id?: number
+          menu_type: string
+          student_id: string
+        }
+        Update: {
+          count?: number
+          id?: number
+          menu_type?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_interactions_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_metrics: {
+        Row: {
+          attention: number
+          block_grabs: number
+          block_releases: number
+          completed_tasks: number
+          engagement: number
+          id: number
+          interaction_rate: number
+          left_hand_usage: number
+          menu_interactions: number
+          move_distance: number
+          right_hand_usage: number
+          student_id: string
+          task_success_rate: number
+          total_hand_actions: number
+        }
+        Insert: {
+          attention?: number
+          block_grabs?: number
+          block_releases?: number
+          completed_tasks?: number
+          engagement?: number
+          id?: number
+          interaction_rate?: number
+          left_hand_usage?: number
+          menu_interactions?: number
+          move_distance?: number
+          right_hand_usage?: number
+          student_id: string
+          task_success_rate?: number
+          total_hand_actions?: number
+        }
+        Update: {
+          attention?: number
+          block_grabs?: number
+          block_releases?: number
+          completed_tasks?: number
+          engagement?: number
+          id?: number
+          interaction_rate?: number
+          left_hand_usage?: number
+          menu_interactions?: number
+          move_distance?: number
+          right_hand_usage?: number
+          student_id?: string
+          task_success_rate?: number
+          total_hand_actions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_metrics_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: true
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          avatar: string
+          classroom_id: string
+          headset_id: string
+          id: string
+          ip_address: string
+          name: string
+        }
+        Insert: {
+          avatar: string
+          classroom_id: string
+          headset_id: string
+          id: string
+          ip_address: string
+          name: string
+        }
+        Update: {
+          avatar?: string
+          classroom_id?: string
+          headset_id?: string
+          id?: string
+          ip_address?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_classroom_id_fkey"
+            columns: ["classroom_id"]
+            isOneToOne: false
+            referencedRelation: "classrooms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
