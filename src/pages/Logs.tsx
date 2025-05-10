@@ -7,6 +7,7 @@ import {
   RouterLog, 
   InteractionStatistic 
 } from "@/services/log-service";
+import { Json } from "@/integrations/supabase/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -75,7 +76,7 @@ const Logs = () => {
     return new Date(timestamp).toLocaleString();
   };
   
-  const formatContent = (content: Record<string, any>) => {
+  const formatContent = (content: Json) => {
     try {
       return JSON.stringify(content, null, 2);
     } catch (e) {
