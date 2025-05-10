@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { 
   fetchLatestLogs, 
   fetchInteractionStatistics,
@@ -33,30 +34,41 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { AlertCircle, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Logs = () => {
   const [viewLimit, setViewLimit] = useState<number>(20);
   
-  // Fetch logs data
+  // Fetch logs data with improved error handling
   const { 
     data: logs = [], 
     isLoading: logsLoading,
     error: logsError,
-    refetch: refetchLogs
+    refetch: refetchLogs,
+    isError: isLogsError
   } = useQuery({
     queryKey: ["routerLogs", viewLimit],
     queryFn: () => fetchLatestLogs(viewLimit),
+    retry: 2,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
   
-  // Fetch statistics data
+  // Fetch statistics data with improved error handling
   const { 
     data: stats = [], 
     isLoading: statsLoading,
     error: statsError,
-    refetch: refetchStats
+    refetch: refetchStats,
+    isError: isStatsError
   } = useQuery({
     queryKey: ["interactionStats"],
     queryFn: fetchInteractionStatistics,
+    retry: 2,
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
   });
   
   // Setup auto-refresh every 30 seconds
@@ -69,8 +81,12 @@ const Logs = () => {
     return () => clearInterval(intervalId);
   }, [refetchLogs, refetchStats]);
 
-  const logTypes = [...new Set(logs.map(log => log.log_type))];
-  const sourceIps = [...new Set(logs.map(log => log.source_ip))];
+  // Show toast notification when data is refreshed
+  const handleRefresh = () => {
+    toast.info("Refreshing data...");
+    refetchLogs();
+    refetchStats();
+  };
   
   const formatTimestamp = (timestamp: string) => {
     return new Date(timestamp).toLocaleString();
@@ -78,19 +94,31 @@ const Logs = () => {
   
   const formatContent = (content: Json) => {
     try {
+      if (typeof content === 'string') {
+        return content;
+      }
       return JSON.stringify(content, null, 2);
     } catch (e) {
       return String(content);
     }
   };
 
-  if (logsError || statsError) {
+  if (isLogsError || isStatsError) {
     return (
-      <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Router Logs</h1>
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-          <p>Error loading data. Please try again later.</p>
-        </div>
+      <div className="container mx-auto py-8 px-4">
+        <h1 className="text-3xl font-bold mb-8">Router Logs Dashboard</h1>
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Database Connection Error</AlertTitle>
+          <AlertDescription>
+            Failed to load data from the database. 
+            {logsError && <p>{(logsError as Error).message}</p>}
+            {statsError && <p>{(statsError as Error).message}</p>}
+          </AlertDescription>
+        </Alert>
+        <Button onClick={handleRefresh} className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+          <RefreshCw className="mr-2 h-4 w-4" /> Try Again
+        </Button>
       </div>
     );
   }
@@ -118,22 +146,19 @@ const Logs = () => {
               <SelectItem value="100">Last 100 logs</SelectItem>
             </SelectContent>
           </Select>
-          <button
-            onClick={() => {
-              refetchLogs();
-              refetchStats();
-            }}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          <Button
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center"
           >
-            Refresh Data
-          </button>
+            <RefreshCw className="mr-2 h-4 w-4" /> Refresh Data
+          </Button>
         </div>
       </div>
       
       <Tabs defaultValue="logs" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="logs">Log Entries</TabsTrigger>
-          <TabsTrigger value="stats">Statistics</TabsTrigger>
+          <TabsTrigger value="logs">Log Entries ({logs.length})</TabsTrigger>
+          <TabsTrigger value="stats">Statistics ({stats.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="logs">
@@ -149,6 +174,14 @@ const Logs = () => {
                 <div className="flex justify-center p-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 </div>
+              ) : logs.length === 0 ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No logs found</AlertTitle>
+                  <AlertDescription>
+                    There are no log entries in the database yet. 
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
@@ -201,6 +234,14 @@ const Logs = () => {
                 <div className="flex justify-center p-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
                 </div>
+              ) : stats.length === 0 ? (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No statistics found</AlertTitle>
+                  <AlertDescription>
+                    There are no interaction statistics in the database yet.
+                  </AlertDescription>
+                </Alert>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {stats.map((stat) => (

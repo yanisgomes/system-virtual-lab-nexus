@@ -7,7 +7,7 @@ export interface RouterLog {
   timestamp: string;
   source_ip: string;
   log_type: string;
-  content: Json;  // Changed from Record<string, any> to Json
+  content: Json;
   time_seconds: number;
   raw_log?: string;
 }
@@ -21,62 +21,82 @@ export interface InteractionStatistic {
 }
 
 export const fetchLatestLogs = async (limit = 100): Promise<RouterLog[]> => {
-  const { data, error } = await supabase
-    .from("router_logs")
-    .select("*")
-    .order("timestamp", { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabase
+      .from("router_logs")
+      .select("*")
+      .order("timestamp", { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    console.error("Error fetching logs:", error);
-    return [];
+    if (error) {
+      console.error("Error fetching logs:", error);
+      throw new Error(`Failed to fetch logs: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchLatestLogs:", err);
+    throw err;
   }
-
-  return data || [];
 };
 
 export const fetchLogsByType = async (logType: string, limit = 50): Promise<RouterLog[]> => {
-  const { data, error } = await supabase
-    .from("router_logs")
-    .select("*")
-    .eq("log_type", logType)
-    .order("timestamp", { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabase
+      .from("router_logs")
+      .select("*")
+      .eq("log_type", logType)
+      .order("timestamp", { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    console.error(`Error fetching logs of type ${logType}:`, error);
-    return [];
+    if (error) {
+      console.error(`Error fetching logs of type ${logType}:`, error);
+      throw new Error(`Failed to fetch logs by type: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchLogsByType:", err);
+    throw err;
   }
-
-  return data || [];
 };
 
 export const fetchLogsByIp = async (sourceIp: string, limit = 50): Promise<RouterLog[]> => {
-  const { data, error } = await supabase
-    .from("router_logs")
-    .select("*")
-    .eq("source_ip", sourceIp)
-    .order("timestamp", { ascending: false })
-    .limit(limit);
+  try {
+    const { data, error } = await supabase
+      .from("router_logs")
+      .select("*")
+      .eq("source_ip", sourceIp)
+      .order("timestamp", { ascending: false })
+      .limit(limit);
 
-  if (error) {
-    console.error(`Error fetching logs for IP ${sourceIp}:`, error);
-    return [];
+    if (error) {
+      console.error(`Error fetching logs for IP ${sourceIp}:`, error);
+      throw new Error(`Failed to fetch logs by IP: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchLogsByIp:", err);
+    throw err;
   }
-
-  return data || [];
 };
 
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
-  const { data, error } = await supabase
-    .from("interaction_statistics")
-    .select("*")
-    .order("interaction_count", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("interaction_statistics")
+      .select("*")
+      .order("interaction_count", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching interaction statistics:", error);
-    return [];
+    if (error) {
+      console.error("Error fetching interaction statistics:", error);
+      throw new Error(`Failed to fetch interaction statistics: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchInteractionStatistics:", err);
+    throw err;
   }
-
-  return data || [];
 };
