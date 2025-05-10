@@ -66,6 +66,52 @@ const generateFocusAreas = () => {
   })).sort((a, b) => b.percentage - a.percentage);
 };
 
+// Generate random metrics for a student
+const generateStudentMetrics = (): StudentMetrics => {
+  const blockGrabs = Math.floor(Math.random() * 10);
+  const blockReleases = blockGrabs - Math.floor(Math.random() * 3);
+  const menuInteractions = Math.floor(Math.random() * 12);
+  
+  return {
+    attention: Math.floor(Math.random() * 100),
+    engagement: Math.floor(Math.random() * 100),
+    interactionRate: Math.floor(Math.random() * 100),
+    moveDistance: Math.floor(Math.random() * 1000) / 10,
+    completedTasks: Math.floor(Math.random() * 10),
+    taskSuccessRate: Math.floor(Math.random() * 100),
+    activityHistory: generateTimeSeriesData(),
+    focusAreas: generateFocusAreas(),
+    interactionCounts: {
+      blockGrabs,
+      blockReleases,
+      menuInteractions,
+      menuTypes: {
+        "BtnInfo": Math.floor(Math.random() * 5),
+        "BtnEnergy": Math.floor(Math.random() * 4),
+        "BtnMatter": Math.floor(Math.random() * 3),
+        "BtnRaisedHand": Math.floor(Math.random() * 2),
+      }
+    },
+    handPreference: {
+      leftHandUsage: Math.floor(Math.random() * 5),
+      rightHandUsage: Math.floor(Math.random() * 8),
+      get totalHandActions() { return this.leftHandUsage + this.rightHandUsage; }
+    }
+  };
+};
+
+// Generate random students for classrooms
+export const generateStudents = (count: number): Student[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `s${i + 10}`,
+    name: `Student ${i + 10}`,
+    headsetId: `VR-${1010 + i}`,
+    ipAddress: `192.168.50.${200 + i}`,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`,
+    metrics: generateStudentMetrics(),
+  }));
+};
+
 // Real headset data based on logs
 const headsetData = {
   "192.168.50.192": {
@@ -196,52 +242,6 @@ export const classroomData = classrooms.reduce((acc, classroom, index) => {
   
   return acc;
 }, {} as Record<string, { students: Student[], metrics: ClassroomMetrics }>);
-
-// Generate random students (only for non-first classroom)
-export const generateStudents = (count: number): Student[] => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `s${i + 10}`,
-    name: `Student ${i + 10}`,
-    headsetId: `VR-${1010 + i}`,
-    ipAddress: `192.168.50.${200 + i}`,
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`,
-    metrics: generateStudentMetrics(),
-  }));
-};
-
-// Generate random metrics for a student
-const generateStudentMetrics = (): StudentMetrics => {
-  const blockGrabs = Math.floor(Math.random() * 10);
-  const blockReleases = blockGrabs - Math.floor(Math.random() * 3);
-  const menuInteractions = Math.floor(Math.random() * 12);
-  
-  return {
-    attention: Math.floor(Math.random() * 100),
-    engagement: Math.floor(Math.random() * 100),
-    interactionRate: Math.floor(Math.random() * 100),
-    moveDistance: Math.floor(Math.random() * 1000) / 10,
-    completedTasks: Math.floor(Math.random() * 10),
-    taskSuccessRate: Math.floor(Math.random() * 100),
-    activityHistory: generateTimeSeriesData(),
-    focusAreas: generateFocusAreas(),
-    interactionCounts: {
-      blockGrabs,
-      blockReleases,
-      menuInteractions,
-      menuTypes: {
-        "BtnInfo": Math.floor(Math.random() * 5),
-        "BtnEnergy": Math.floor(Math.random() * 4),
-        "BtnMatter": Math.floor(Math.random() * 3),
-        "BtnRaisedHand": Math.floor(Math.random() * 2),
-      }
-    },
-    handPreference: {
-      leftHandUsage: Math.floor(Math.random() * 5),
-      rightHandUsage: Math.floor(Math.random() * 8),
-      get totalHandActions() { return this.leftHandUsage + this.rightHandUsage; }
-    }
-  };
-};
 
 // Simulate fetching classroom data
 export const fetchClassroomData = (classroomId: string) => {
