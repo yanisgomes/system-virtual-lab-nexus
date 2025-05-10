@@ -15,6 +15,7 @@ export interface Student {
   id: string;
   name: string;
   headsetId: string;
+  ipAddress: string;
   avatar: string;
   metrics: StudentMetrics;
 }
@@ -28,6 +29,17 @@ export interface StudentMetrics {
   taskSuccessRate: number;
   activityHistory: { timestamp: number; value: number }[];
   focusAreas: { area: string; percentage: number }[];
+  interactionCounts: {
+    blockGrabs: number;
+    blockReleases: number;
+    menuInteractions: number;
+    menuTypes: Record<string, number>;
+  };
+  handPreference: {
+    leftHandUsage: number;
+    rightHandUsage: number;
+    totalHandActions: number;
+  };
 }
 
 // Mock classrooms
@@ -35,8 +47,6 @@ export const classrooms: Classroom[] = [
   { id: "c1", name: "Biology 101" },
   { id: "c2", name: "Chemistry Lab" },
   { id: "c3", name: "Physics Concepts" },
-  { id: "c4", name: "Math Workshop" },
-  { id: "c5", name: "Geography Tour" },
 ];
 
 // Generate random time series data
@@ -56,30 +66,106 @@ const generateFocusAreas = () => {
   })).sort((a, b) => b.percentage - a.percentage);
 };
 
-// Generate random metrics for a student
-const generateStudentMetrics = (): StudentMetrics => ({
-  attention: Math.floor(Math.random() * 100),
-  engagement: Math.floor(Math.random() * 100),
-  interactionRate: Math.floor(Math.random() * 100),
-  moveDistance: Math.floor(Math.random() * 1000) / 10,
-  completedTasks: Math.floor(Math.random() * 10),
-  taskSuccessRate: Math.floor(Math.random() * 100),
-  activityHistory: generateTimeSeriesData(),
-  focusAreas: generateFocusAreas(),
-});
-
-// Generate random students
-export const generateStudents = (count: number): Student[] => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: `s${i + 1}`,
-    name: `Student ${i + 1}`,
-    headsetId: `VR-${1000 + i}`,
-    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i}`,
-    metrics: generateStudentMetrics(),
-  }));
+// Real headset data based on logs
+const headsetData = {
+  "192.168.50.192": {
+    id: "s1",
+    name: "Emma Johnson",
+    headsetId: "VR-1001",
+    ipAddress: "192.168.50.192",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=1",
+    metrics: {
+      attention: 78,
+      engagement: 85,
+      interactionRate: 92,
+      moveDistance: 45.3,
+      completedTasks: 7,
+      taskSuccessRate: 82,
+      activityHistory: generateTimeSeriesData(),
+      focusAreas: generateFocusAreas(),
+      interactionCounts: {
+        blockGrabs: 12,
+        blockReleases: 11,
+        menuInteractions: 0,
+        menuTypes: {}
+      },
+      handPreference: {
+        leftHandUsage: 3,
+        rightHandUsage: 9,
+        totalHandActions: 12
+      }
+    }
+  },
+  "192.168.50.235": {
+    id: "s2",
+    name: "Michael Chen",
+    headsetId: "VR-1002",
+    ipAddress: "192.168.50.235",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=2",
+    metrics: {
+      attention: 65,
+      engagement: 72,
+      interactionRate: 68,
+      moveDistance: 32.8,
+      completedTasks: 5,
+      taskSuccessRate: 75,
+      activityHistory: generateTimeSeriesData(),
+      focusAreas: generateFocusAreas(),
+      interactionCounts: {
+        blockGrabs: 0,
+        blockReleases: 0,
+        menuInteractions: 16,
+        menuTypes: {
+          "BtnInfo": 9,
+          "BtnEnergy": 4,
+          "BtnMatter": 4,
+          "BtnRaisedHand": 1
+        }
+      },
+      handPreference: {
+        leftHandUsage: 0,
+        rightHandUsage: 0,
+        totalHandActions: 0
+      }
+    }
+  },
+  "192.168.50.193": {  // Additional student with mock data
+    id: "s3",
+    name: "Sophia Martinez",
+    headsetId: "VR-1003",
+    ipAddress: "192.168.50.193",
+    avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=3",
+    metrics: {
+      attention: 88,
+      engagement: 91,
+      interactionRate: 76,
+      moveDistance: 28.5,
+      completedTasks: 8,
+      taskSuccessRate: 95,
+      activityHistory: generateTimeSeriesData(),
+      focusAreas: generateFocusAreas(),
+      interactionCounts: {
+        blockGrabs: 6,
+        blockReleases: 6,
+        menuInteractions: 8,
+        menuTypes: {
+          "BtnInfo": 4,
+          "BtnEnergy": 2,
+          "BtnMatter": 2
+        }
+      },
+      handPreference: {
+        leftHandUsage: 1,
+        rightHandUsage: 5,
+        totalHandActions: 6
+      }
+    }
+  }
 };
 
-// Generate classroom metrics
+const studentsArray = Object.values(headsetData);
+
+// Generate classroom metrics based on real student data
 export const generateClassroomMetrics = (students: Student[]): ClassroomMetrics => {
   const totalEngagement = Math.round(
     students.reduce((sum, student) => sum + student.metrics.engagement, 0) / students.length
@@ -93,14 +179,14 @@ export const generateClassroomMetrics = (students: Student[]): ClassroomMetrics 
     totalEngagement,
     averageAttention,
     activeStudents: students.length,
-    sessionDuration: Math.floor(Math.random() * 120) + 30, // 30-150 minutes
+    sessionDuration: 45, // 45 minutes
   };
 };
 
 // Mock data for each classroom
-export const classroomData = classrooms.reduce((acc, classroom) => {
-  const studentCount = Math.floor(Math.random() * 15) + 10; // 10-25 students
-  const students = generateStudents(studentCount);
+export const classroomData = classrooms.reduce((acc, classroom, index) => {
+  // First classroom gets the real headset data
+  const students = index === 0 ? studentsArray : generateStudents(3);
   const metrics = generateClassroomMetrics(students);
   
   acc[classroom.id] = {
@@ -110,6 +196,52 @@ export const classroomData = classrooms.reduce((acc, classroom) => {
   
   return acc;
 }, {} as Record<string, { students: Student[], metrics: ClassroomMetrics }>);
+
+// Generate random students (only for non-first classroom)
+export const generateStudents = (count: number): Student[] => {
+  return Array.from({ length: count }, (_, i) => ({
+    id: `s${i + 10}`,
+    name: `Student ${i + 10}`,
+    headsetId: `VR-${1010 + i}`,
+    ipAddress: `192.168.50.${200 + i}`,
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`,
+    metrics: generateStudentMetrics(),
+  }));
+};
+
+// Generate random metrics for a student
+const generateStudentMetrics = (): StudentMetrics => {
+  const blockGrabs = Math.floor(Math.random() * 10);
+  const blockReleases = blockGrabs - Math.floor(Math.random() * 3);
+  const menuInteractions = Math.floor(Math.random() * 12);
+  
+  return {
+    attention: Math.floor(Math.random() * 100),
+    engagement: Math.floor(Math.random() * 100),
+    interactionRate: Math.floor(Math.random() * 100),
+    moveDistance: Math.floor(Math.random() * 1000) / 10,
+    completedTasks: Math.floor(Math.random() * 10),
+    taskSuccessRate: Math.floor(Math.random() * 100),
+    activityHistory: generateTimeSeriesData(),
+    focusAreas: generateFocusAreas(),
+    interactionCounts: {
+      blockGrabs,
+      blockReleases,
+      menuInteractions,
+      menuTypes: {
+        "BtnInfo": Math.floor(Math.random() * 5),
+        "BtnEnergy": Math.floor(Math.random() * 4),
+        "BtnMatter": Math.floor(Math.random() * 3),
+        "BtnRaisedHand": Math.floor(Math.random() * 2),
+      }
+    },
+    handPreference: {
+      leftHandUsage: Math.floor(Math.random() * 5),
+      rightHandUsage: Math.floor(Math.random() * 8),
+      get totalHandActions() { return this.leftHandUsage + this.rightHandUsage; }
+    }
+  };
+};
 
 // Simulate fetching classroom data
 export const fetchClassroomData = (classroomId: string) => {
