@@ -11,7 +11,7 @@ interface StudentCardProps {
 }
 
 const StudentCard = ({ student, onClick }: StudentCardProps) => {
-  const { name, metrics, headsetId, ipAddress, avatar } = student;
+  const { name, metrics, headset_id, ip_address, avatar } = student;
 
   const getProgressColor = (value: number) => {
     if (value >= 70) return "bg-green-500";
@@ -37,7 +37,7 @@ const StudentCard = ({ student, onClick }: StudentCardProps) => {
           </Avatar>
           <div className="flex-1">
             <h3 className="font-medium text-sm">{name}</h3>
-            <p className="text-muted-foreground text-xs">{headsetId} ({ipAddress})</p>
+            <p className="text-muted-foreground text-xs">{headset_id} ({ip_address})</p>
           </div>
         </div>
 
@@ -75,7 +75,7 @@ const StudentCard = ({ student, onClick }: StudentCardProps) => {
             <span>
               {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions > 0 
                 ? `${metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions} actions` 
-                : `${metrics.completedTasks} (${metrics.taskSuccessRate}% success)`}
+                : `${metrics.completed_tasks} (${metrics.task_success_rate}% success)`}
             </span>
           </div>
         </div>

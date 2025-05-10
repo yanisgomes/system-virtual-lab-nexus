@@ -16,7 +16,7 @@ interface StudentDetailModalProps {
 const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps) => {
   if (!student) return null;
 
-  const { name, headsetId, ipAddress, metrics, avatar } = student;
+  const { name, headset_id, ip_address, metrics, avatar } = student;
   const initials = name.split(" ").map((n) => n[0]).join("");
 
   // Format timestamp for the chart
@@ -62,7 +62,7 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
           <div>
             <DialogTitle className="text-xl">{name}</DialogTitle>
             <DialogDescription>
-              Headset: {headsetId} | IP: {ipAddress}
+              Headset: {headset_id} | IP: {ip_address}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -96,7 +96,7 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                 {metrics.interactionCounts.blockGrabs > 0 && `${metrics.interactionCounts.blockGrabs} blocks, `}
                 {metrics.interactionCounts.menuInteractions > 0 && `${metrics.interactionCounts.menuInteractions} menu actions`}
                 {metrics.interactionCounts.blockGrabs === 0 && metrics.interactionCounts.menuInteractions === 0 && 
-                  `${metrics.completedTasks} tasks completed`}
+                  `${metrics.completed_tasks} tasks completed`}
               </p>
             </CardContent>
           </Card>
@@ -257,26 +257,26 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                   <h4 className="text-sm font-medium mb-2">Interaction Rate</h4>
                   <div className="flex items-center">
                     <Progress 
-                      value={metrics.interactionRate} 
+                      value={metrics.interaction_rate} 
                       className="h-2 flex-1 mr-2"
-                      indicatorClassName={getProgressColor(metrics.interactionRate)}
+                      indicatorClassName={getProgressColor(metrics.interaction_rate)}
                     />
-                    <span className="text-sm font-medium w-10 text-right">{metrics.interactionRate}%</span>
+                    <span className="text-sm font-medium w-10 text-right">{metrics.interaction_rate}%</span>
                   </div>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-2">Movement Distance</h4>
-                  <p className="text-lg font-bold">{metrics.moveDistance} <span className="text-sm font-normal text-muted-foreground">meters</span></p>
+                  <p className="text-lg font-bold">{metrics.move_distance} <span className="text-sm font-normal text-muted-foreground">meters</span></p>
                 </div>
                 <div>
                   <h4 className="text-sm font-medium mb-2">Task Success Rate</h4>
                   <div className="flex items-center">
                     <Progress 
-                      value={metrics.taskSuccessRate} 
+                      value={metrics.task_success_rate} 
                       className="h-2 flex-1 mr-2"
-                      indicatorClassName={getProgressColor(metrics.taskSuccessRate)}
+                      indicatorClassName={getProgressColor(metrics.task_success_rate)}
                     />
-                    <span className="text-sm font-medium w-10 text-right">{metrics.taskSuccessRate}%</span>
+                    <span className="text-sm font-medium w-10 text-right">{metrics.task_success_rate}%</span>
                   </div>
                 </div>
               </CardContent>
