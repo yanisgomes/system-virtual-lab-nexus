@@ -117,6 +117,30 @@ export type Database = {
           },
         ]
       }
+      interaction_statistics: {
+        Row: {
+          id: string
+          interaction_count: number
+          last_interaction: string | null
+          log_type: string
+          source_ip: string
+        }
+        Insert: {
+          id?: string
+          interaction_count?: number
+          last_interaction?: string | null
+          log_type: string
+          source_ip: string
+        }
+        Update: {
+          id?: string
+          interaction_count?: number
+          last_interaction?: string | null
+          log_type?: string
+          source_ip?: string
+        }
+        Relationships: []
+      }
       logs: {
         Row: {
           id: number
@@ -160,6 +184,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      router_logs: {
+        Row: {
+          content: Json
+          id: string
+          log_type: string
+          raw_log: string | null
+          source_ip: string
+          time_seconds: number
+          timestamp: string
+        }
+        Insert: {
+          content: Json
+          id?: string
+          log_type: string
+          raw_log?: string | null
+          source_ip: string
+          time_seconds: number
+          timestamp?: string
+        }
+        Update: {
+          content?: Json
+          id?: string
+          log_type?: string
+          raw_log?: string | null
+          source_ip?: string
+          time_seconds?: number
+          timestamp?: string
+        }
+        Relationships: []
       }
       student_metrics: {
         Row: {
