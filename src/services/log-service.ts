@@ -1,12 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface RouterLog {
   id: string;
   timestamp: string;
   source_ip: string;
   log_type: string;
-  content: Record<string, any>;
+  content: Json;  // Changed from Record<string, any> to Json
   time_seconds: number;
   raw_log?: string;
 }
