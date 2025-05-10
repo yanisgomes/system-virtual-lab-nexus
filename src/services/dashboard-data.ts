@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Classroom {
@@ -156,8 +155,23 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       console.error(`Error fetching menu interactions for student ${student.id}:`, menuInteractionsError);
     }
     
-    // Ensure metrics is an object with default values if no data is returned
-    const metrics = metricsData || {};
+    // Create a metrics object with default values, then override with actual data if available
+    const metrics = {
+      attention: 0,
+      engagement: 0,
+      interaction_rate: 0,
+      move_distance: 0,
+      completed_tasks: 0,
+      task_success_rate: 0,
+      block_grabs: 0,
+      block_releases: 0,
+      menu_interactions: 0,
+      left_hand_usage: 0,
+      right_hand_usage: 0,
+      total_hand_actions: 0,
+      ...metricsData
+    };
+    
     const activityHistory = (activityData || []).map(item => ({
       timestamp: item.timestamp,
       value: item.value
@@ -181,24 +195,24 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       ip_address: student.ip_address,
       avatar: student.avatar,
       metrics: {
-        attention: metrics.attention || 0,
-        engagement: metrics.engagement || 0,
-        interaction_rate: metrics.interaction_rate || 0,
-        move_distance: metrics.move_distance || 0,
-        completed_tasks: metrics.completed_tasks || 0,
-        task_success_rate: metrics.task_success_rate || 0,
+        attention: metrics.attention,
+        engagement: metrics.engagement,
+        interaction_rate: metrics.interaction_rate,
+        move_distance: metrics.move_distance,
+        completed_tasks: metrics.completed_tasks,
+        task_success_rate: metrics.task_success_rate,
         activityHistory,
         focusAreas,
         interactionCounts: {
-          blockGrabs: metrics.block_grabs || 0,
-          blockReleases: metrics.block_releases || 0,
-          menuInteractions: metrics.menu_interactions || 0,
+          blockGrabs: metrics.block_grabs,
+          blockReleases: metrics.block_releases,
+          menuInteractions: metrics.menu_interactions,
           menuTypes
         },
         handPreference: {
-          leftHandUsage: metrics.left_hand_usage || 0,
-          rightHandUsage: metrics.right_hand_usage || 0,
-          totalHandActions: metrics.total_hand_actions || 0
+          leftHandUsage: metrics.left_hand_usage,
+          rightHandUsage: metrics.right_hand_usage,
+          totalHandActions: metrics.total_hand_actions
         }
       }
     };
