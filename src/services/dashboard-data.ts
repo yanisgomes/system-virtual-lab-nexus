@@ -156,6 +156,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       console.error(`Error fetching menu interactions for student ${student.id}:`, menuInteractionsError);
     }
     
+    // Ensure metrics is an object with default values if no data is returned
     const metrics = metricsData || {};
     const activityHistory = (activityData || []).map(item => ({
       timestamp: item.timestamp,
