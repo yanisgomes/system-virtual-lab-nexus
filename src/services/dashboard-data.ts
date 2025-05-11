@@ -1,5 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { RouterLog } from "@/services/log-service";
 
 export interface Classroom {
   id: string;
@@ -229,7 +229,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
 };
 
 // Function to process router logs into activity history
-const processActivityHistory = (logs: any[]): { timestamp: number; value: number }[] => {
+export const processActivityHistory = (logs: any[]): { timestamp: number; value: number }[] => {
   if (logs.length === 0) return [];
   
   // Group logs by 5-minute intervals and count interactions as engagement
@@ -269,7 +269,7 @@ const processActivityHistory = (logs: any[]): { timestamp: number; value: number
 };
 
 // Function to process router logs into focus areas
-const processFocusAreas = (logs: any[]): { area: string; percentage: number }[] => {
+export const processFocusAreas = (logs: any[]): { area: string; percentage: number }[] => {
   if (logs.length === 0) {
     return [
       { area: "Building", percentage: 45 },
@@ -319,7 +319,7 @@ const processFocusAreas = (logs: any[]): { area: string; percentage: number }[] 
 };
 
 // Function to process router logs into menu interactions
-const processMenuInteractions = (logs: any[]): { menuTypes: Record<string, number>, menuInteractions: number } => {
+export const processMenuInteractions = (logs: any[]): { menuTypes: Record<string, number>, menuInteractions: number } => {
   const menuTypes: Record<string, number> = {};
   let menuInteractions = 0;
   
@@ -344,7 +344,7 @@ const processMenuInteractions = (logs: any[]): { menuTypes: Record<string, numbe
 };
 
 // Function to process router logs into block interactions
-const processBlockInteractions = (logs: any[]): { blockGrabs: number, blockReleases: number } => {
+export const processBlockInteractions = (logs: any[]): { blockGrabs: number, blockReleases: number } => {
   let blockGrabs = 0;
   let blockReleases = 0;
   
@@ -362,7 +362,7 @@ const processBlockInteractions = (logs: any[]): { blockGrabs: number, blockRelea
 };
 
 // Function to process router logs into hand usage data
-const processHandUsage = (logs: any[]): { leftHandUsage: number, rightHandUsage: number, totalHandActions: number } => {
+export const processHandUsage = (logs: any[]): { leftHandUsage: number, rightHandUsage: number, totalHandActions: number } => {
   let leftHandUsage = 0;
   let rightHandUsage = 0;
   

@@ -84,7 +84,7 @@ export const fetchLogsByIp = async (sourceIp: string, limit = 50): Promise<Route
 
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
   try {
-    // Fix: Type the RPC response explicitly to work around TypeScript limitations
+    // Fix: Use the correct return type with the .returns<InteractionStatistic[]>() method
     const { data, error } = await supabase
       .rpc('get_interaction_statistics')
       .returns<InteractionStatistic[]>();
@@ -94,7 +94,6 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
       throw new Error(`Failed to fetch interaction statistics: ${error.message}`);
     }
 
-    // Return the data directly since it's already typed correctly
     return data || [];
   } catch (err) {
     console.error("Error in fetchInteractionStatistics:", err);
