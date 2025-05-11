@@ -1,73 +1,80 @@
-# Welcome to your Lovable project
 
-## Project info
+# Lenovo VRX Didactic Toolkit
 
-**URL**: https://lovable.dev/projects/e058b56e-7e5e-4a68-b26a-d27c7046b555
+A web-based teacher dashboard that monitors students' VR headsets in real-time.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- Real-time monitoring of student activity in VR
+- Visual indicators for student attention and engagement
+- Notification system for when students need help
+- Activity timeline with sparkline visualization
+- Predictive status indicators based on interaction patterns
 
-**Use Lovable**
+## Components
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/e058b56e-7e5e-4a68-b26a-d27c7046b555) and start prompting.
+### StudentCard
 
-Changes made via Lovable will be committed automatically to this repo.
+The StudentCard component displays real-time student activity with:
 
-**Use your preferred IDE**
+- Student profile information (name, headset ID, IP)
+- Real-time interaction sparkline (last 2 minutes)
+- Predictive status badge (Active, Hesitant, Persistent, Struggling, Idle)
+- Inactivity timer when no events received for 10+ seconds
+- Task completion statistics
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+#### Usage
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+```jsx
+import StudentCard from "@/components/dashboard/StudentCard";
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+// In your component
+<StudentCard 
+  student={studentData} 
+  onClick={handleStudentSelect} 
+/>
 ```
 
-**Edit a file directly in GitHub**
+### InteractionSparkline
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The InteractionSparkline component shows real-time activity as a sparkline graph:
 
-**Use GitHub Codespaces**
+- Real-time updates from Supabase router_logs table
+- Animated transitions for new data points
+- Configurable time window (default: 120 seconds)
+- Automatic status calculations
+- Inactivity detection and timer
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+#### Usage
 
-## What technologies are used for this project?
+```jsx
+import InteractionSparkline from "@/components/dashboard/InteractionSparkline";
 
-This project is built with:
+// In your component
+<InteractionSparkline 
+  sourceIp={ipAddress} 
+  windowSize={120} // 2 minutes
+  height={36} // Optional: adjust height
+  className="my-custom-class" // Optional: additional styling
+/>
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Performance Tips
 
-## How can I deploy this project?
+- Components use React.memo to prevent unnecessary re-renders
+- SVG rendering is optimized for performance
+- Subscriptions are properly cleaned up on component unmount
+- For large classrooms, consider:
+  - Using react-window for virtualized list rendering
+  - Implementing pagination or filtering to limit displayed students
+  - Adjusting windowSize to a smaller value (60s instead of 120s)
 
-Simply open [Lovable](https://lovable.dev/projects/e058b56e-7e5e-4a68-b26a-d27c7046b555) and click on Share -> Publish.
+## Development
 
-## Can I connect a custom domain to my Lovable project?
+### Running Storybook
 
-Yes, you can!
+```
+npm run storybook
+```
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+The StudentCard storybook includes an interactive "Simulate Interaction" button to test real-time functionality without needing actual VR headsets.

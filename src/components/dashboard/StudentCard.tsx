@@ -1,9 +1,9 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Student } from "@/services/dashboard-data";
 import { MouseEventHandler } from "react";
+import InteractionSparkline from "./InteractionSparkline";
 
 interface StudentCardProps {
   student: Student;
@@ -12,12 +12,6 @@ interface StudentCardProps {
 
 const StudentCard = ({ student, onClick }: StudentCardProps) => {
   const { name, metrics, headset_id, ip_address, avatar } = student;
-
-  const getProgressColor = (value: number) => {
-    if (value >= 70) return "bg-green-500";
-    if (value >= 40) return "bg-yellow-500";
-    return "bg-red-500";
-  };
 
   const initials = name
     .split(" ")
@@ -42,40 +36,22 @@ const StudentCard = ({ student, onClick }: StudentCardProps) => {
         </div>
 
         <div className="space-y-3">
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span>Attention</span>
-              <span className="font-medium">{metrics.attention}%</span>
-            </div>
-            <Progress 
-              value={metrics.attention} 
-              className="h-2"
-              indicatorClassName={getProgressColor(metrics.attention)}
-            />
-          </div>
-
-          <div className="space-y-1">
-            <div className="flex justify-between text-xs">
-              <span>Engagement</span>
-              <span className="font-medium">{metrics.engagement}%</span>
-            </div>
-            <Progress 
-              value={metrics.engagement} 
-              className="h-2"
-              indicatorClassName={getProgressColor(metrics.engagement)}
-            />
-          </div>
+          {/* Replace static progress bars with real-time sparkline */}
+          <InteractionSparkline 
+            sourceIp={ip_address} 
+            className="mt-1" 
+            windowSize={120} // 2 minutes window
+          />
 
           <div className="flex justify-between text-xs">
+            <span>Tasks Completed</span>
+            <span>{metrics.completed_tasks} ({metrics.task_success_rate}% success)</span>
+          </div>
+          
+          <div className="flex justify-between text-xs">
+            <span>Interactions</span>
             <span>
-              {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions > 0 
-                ? "Interactions"
-                : "Tasks Completed"}
-            </span>
-            <span>
-              {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions > 0 
-                ? `${metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions} actions` 
-                : `${metrics.completed_tasks} (${metrics.task_success_rate}% success)`}
+              {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions} actions
             </span>
           </div>
         </div>
