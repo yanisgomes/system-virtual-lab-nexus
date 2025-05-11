@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMessages, sendTeacherMessage, Message } from "@/services/message-service";
 import ChatMessageBubble from "./ChatMessageBubble";
@@ -16,6 +16,7 @@ interface ChatTabProps {
 const ChatTab = ({ student }: ChatTabProps) => {
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
+  const queryClient = useQueryClient();
 
   // Fetch messages
   const { data: messages = [], isLoading } = useQuery({
@@ -40,6 +41,17 @@ const ChatTab = ({ student }: ChatTabProps) => {
       setOptimisticMessages(prev => [optimisticMessage, ...prev]);
       return { optimisticMessage };
     },
+    onSuccess: (data, variables) => {
+      // Push server-confirmed message into cache
+      queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
+        return [data, ...old];
+      });
+      
+      // Remove the matching optimistic message
+      setOptimisticMessages(prev => 
+        prev.filter(msg => msg.content !== variables.content)
+      );
+    },
     onError: (error, variables, context) => {
       console.error("Failed to send message:", error);
       // Remove the optimistic message on error
@@ -48,10 +60,6 @@ const ChatTab = ({ student }: ChatTabProps) => {
           prev.filter(msg => msg.id !== context.optimisticMessage.id)
         );
       }
-    },
-    onSettled: () => {
-      // Clear optimistic messages after the server responds
-      setOptimisticMessages([]);
     },
   });
 
@@ -74,7 +82,11 @@ const ChatTab = ({ student }: ChatTabProps) => {
         },
         (payload) => {
           console.log("New message received:", payload);
-          // We'll let React Query handle the refetch
+          // Update the query cache with the new message
+          queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
+            const exists = old.some(m => m.id === payload.new.id);
+            return exists ? old : [payload.new as Message, ...old];
+          });
         }
       )
       .subscribe();
@@ -82,7 +94,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [student.id]);
+  }, [student.id, queryClient]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
