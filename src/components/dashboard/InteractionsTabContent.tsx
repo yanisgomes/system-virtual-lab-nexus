@@ -91,16 +91,15 @@ const InteractionsTabContent = ({
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  {/* Use dynamic color mapping for each bar based on menu name */}
-                  {menuTypeData.map((entry) => (
-                    <Bar 
-                      key={entry.name}
-                      dataKey="value" 
-                      name={entry.name}
-                      fill={MENU_COLORS[entry.name] || "#9b87f5"} 
-                      className="animate-in fade-in duration-500"
-                    />
-                  ))}
+                  {/* Single Bar component with Cell components for individual colors */}
+                  <Bar dataKey="value" name="Interactions">
+                    {menuTypeData.map((entry) => (
+                      <Cell 
+                        key={entry.name} 
+                        fill={MENU_COLORS[entry.name] || "#9b87f5"}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
