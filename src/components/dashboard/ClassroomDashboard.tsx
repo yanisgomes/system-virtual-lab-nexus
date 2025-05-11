@@ -156,7 +156,7 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle>Classroom Attention Levels</CardTitle>
+              <CardTitle>Classroom Engagement Levels</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[300px] w-full">
