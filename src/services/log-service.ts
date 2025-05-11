@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -17,6 +18,16 @@ export interface InteractionStatistic {
   log_type: string;
   interaction_count: number;
   last_interaction: string | null;
+}
+
+// Define the RouterLogInput interface that was missing
+export interface RouterLogInput {
+  timestamp?: string;
+  source_ip: string;
+  log_type: string;
+  content: Json;
+  time_seconds: number;
+  raw_log?: string;
 }
 
 export const fetchLatestLogs = async (limit = 100): Promise<RouterLog[]> => {

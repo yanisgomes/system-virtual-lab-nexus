@@ -2,7 +2,6 @@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Student } from "@/services/dashboard-data";
-import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from "recharts";
@@ -24,12 +23,6 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
     time: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     value: item.value
   }));
-
-  const getProgressColor = (value: number) => {
-    if (value >= 70) return "bg-green-500";
-    if (value >= 40) return "bg-yellow-500";
-    return "bg-red-500";
-  };
 
   // Prepare interaction data for charts
   const handPreferenceData = [
@@ -103,10 +96,9 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
         </div>
 
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4">
+          <TabsList className="grid grid-cols-2 mb-4">
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="interactions">Interactions</TabsTrigger>
-            <TabsTrigger value="metrics">Metrics</TabsTrigger>
           </TabsList>
           
           <TabsContent value="activity" className="p-1">
@@ -219,42 +211,6 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                 </Card>
               )}
             </div>
-          </TabsContent>
-          
-          <TabsContent value="metrics" className="p-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Detailed Metrics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Interaction Rate</h4>
-                  <div className="flex items-center">
-                    <Progress 
-                      value={metrics.interaction_rate} 
-                      className="h-2 flex-1 mr-2"
-                      indicatorClassName={getProgressColor(metrics.interaction_rate)}
-                    />
-                    <span className="text-sm font-medium w-10 text-right">{metrics.interaction_rate}%</span>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Movement Distance</h4>
-                  <p className="text-lg font-bold">{metrics.move_distance} <span className="text-sm font-normal text-muted-foreground">meters</span></p>
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium mb-2">Task Success Rate</h4>
-                  <div className="flex items-center">
-                    <Progress 
-                      value={metrics.task_success_rate} 
-                      className="h-2 flex-1 mr-2"
-                      indicatorClassName={getProgressColor(metrics.task_success_rate)}
-                    />
-                    <span className="text-sm font-medium w-10 text-right">{metrics.task_success_rate}%</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </DialogContent>
