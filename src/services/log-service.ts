@@ -115,6 +115,7 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
 
 export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterLog | null> => {
   try {
+    // Fix: Type the response properly using generic type parameter
     const { error, data } = await supabase
       .from('router_logs')
       .insert([
