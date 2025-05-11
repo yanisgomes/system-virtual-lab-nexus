@@ -44,7 +44,7 @@ const StatusBadge = ({ status, className }: StatusBadgeProps) => {
 
   return (
     <Badge 
-      className={`${getBadgeStyle()} text-xs ${className}`}
+      className={`${getBadgeStyle()} text-xs px-4 py-1 ${className}`}
       aria-label={`Student status: ${getBadgeText()}`}
     >
       {getBadgeText()}

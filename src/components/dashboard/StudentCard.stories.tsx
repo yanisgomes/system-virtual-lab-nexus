@@ -12,15 +12,33 @@ const mockStudent = {
   ip_address: '192.168.1.101',
   headset_id: 'VR-102',
   avatar: '/placeholder.svg',
-  classroom_id: 'class-001', // Added classroom_id
+  classroom_id: 'class-001',
   metrics: {
     attention: 75,
     engagement: 82,
     completed_tasks: 8,
     task_success_rate: 75,
+    interaction_rate: 65,
+    move_distance: 120,
     interactionCounts: {
       blockGrabs: 24,
-      menuInteractions: 18
+      blockReleases: 18,
+      menuInteractions: 18,
+      menuTypes: {}
+    },
+    activityHistory: Array(24).fill(0).map((_, i) => ({
+      time: Date.now() - (24 - i) * 5 * 60 * 1000,
+      value: Math.floor(Math.random() * 100),
+      timestamp: new Date(Date.now() - (24 - i) * 5 * 60 * 1000).toISOString()
+    })),
+    focusAreas: [
+      { id: 'Building', name: 'Building', percentage: 45 },
+      { id: 'Exploration', name: 'Exploration', percentage: 30 }
+    ],
+    handPreference: {
+      leftHandUsage: 35,
+      rightHandUsage: 65,
+      totalHandActions: 100
     }
   }
 };

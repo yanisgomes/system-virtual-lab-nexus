@@ -132,20 +132,32 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       console.error(`Error fetching metrics for student ${student.id}:`, metricsError);
     }
     
+    // Get router logs for this student
+    const { data: logsData, error: logsError } = await supabase
+      .from("router_logs")
+      .select("*")
+      .eq("source_ip", student.ip_address)
+      .order("timestamp", { ascending: false })
+      .limit(100);
+    
+    if (logsError) {
+      console.error(`Error fetching logs for student ${student.id}:`, logsError);
+    }
+    
     // Process logs to create activity history (sample activity levels over time)
-    const activityHistory = processActivityHistory(activityLogsData || []);
+    const activityHistory = processActivityHistory(logsData || []);
     
     // Derive focus areas from router_logs
-    const focusAreas = processFocusAreas(activityLogsData || []);
+    const focusAreas = processFocusAreas(logsData || []);
     
     // Derive menu interactions from router_logs
-    const { menuTypes, menuInteractions } = processMenuInteractions(activityLogsData || []);
+    const { menuTypes, menuInteractions } = processMenuInteractions(logsData || []);
     
     // Derive block interactions from router_logs
-    const { blockGrabs, blockReleases } = processBlockInteractions(activityLogsData || []);
+    const { blockGrabs, blockReleases } = processBlockInteractions(logsData || []);
     
     // Derive hand usage from router_logs
-    const { leftHandUsage, rightHandUsage, totalHandActions } = processHandUsage(activityLogsData || []);
+    const { leftHandUsage, rightHandUsage, totalHandActions } = processHandUsage(logsData || []);
     
     // Create a metrics object with default values, then override with actual data if available
     const metrics = {

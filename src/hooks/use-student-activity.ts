@@ -46,7 +46,8 @@ export function useStudentActivity(sourceIp: string): StudentActivityResult {
     
     if (typeof content === 'object' && content !== null) {
       // If content is an object, try to access buttonName property
-      return (content as Record<string, any>).buttonName || null;
+      const contentObject = content as Record<string, any>;
+      return contentObject.buttonName || null;
     }
     
     return null;

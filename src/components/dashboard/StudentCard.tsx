@@ -42,17 +42,15 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
       className="cursor-pointer hover:border-vr-purple transition-colors" 
       onClick={handleClick}
     >
-      <CardContent className="p-4">
-        <div className="flex items-center gap-3 mb-3 relative">
+      <CardContent className="p-4 flex flex-col gap-3 relative pb-5">
+        {/* Header row with avatar and student info */}
+        <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium text-sm">{name}</h3>
-              <StatusBadge status={status} />
-            </div>
+            <h3 className="font-medium text-sm">{name}</h3>
             <p className="text-muted-foreground text-xs">{headset_id} ({ip_address})</p>
           </div>
           
@@ -60,42 +58,40 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
           <ActivityBeacon
             lastInteractionTime={lastActivityTime}
             helpRequested={helpRequested}
-            className="absolute top-0 right-0"
+            className="absolute top-2 right-2"
           />
         </div>
 
-        <div className="space-y-3">
-          {/* Task Progress Bar */}
-          <div>
-            <div className="flex justify-between text-xs mb-1">
-              <span>Task Progress</span>
-              <span>{Math.min(taskProgress, 100)}%</span>
-            </div>
-            <TaskProgressBar 
-              progress={taskProgress}
-              onComplete={() => console.log(`${name} completed task!`)}
-            />
+        {/* Status Badge - centered below avatar row */}
+        <StatusBadge 
+          status={status} 
+          className="self-center mx-auto"
+        />
+        
+        {/* Task Completion Stats - optional, can be hidden on small screens */}
+        <div className="text-xs text-muted-foreground text-center sm:block">
+          Tasks Completed: {metrics.completed_tasks} ({metrics.task_success_rate}% success)
+        </div>
+        
+        {/* Spacer to push progress bar to bottom */}
+        <div className="flex-grow" />
+        
+        {/* Inactivity Notice */}
+        {lastActivityTime && 
+         (new Date().getTime() - lastActivityTime.getTime()) / 1000 > 10 && (
+          <p className="text-xs text-gray-400 text-center">Inactive since: {inactiveTime}</p>
+        )}
+        
+        {/* Task Progress Bar at bottom */}
+        <div className="mt-auto">
+          <div className="flex justify-between text-xs mb-1">
+            <span>Task Progress</span>
+            <span>{Math.min(taskProgress, 100)}%</span>
           </div>
-          
-          {/* Task Completion Stats */}
-          <div className="flex justify-between text-xs">
-            <span>Tasks Completed</span>
-            <span>{metrics.completed_tasks} ({metrics.task_success_rate}% success)</span>
-          </div>
-          
-          {/* Interaction Stats */}
-          <div className="flex justify-between text-xs">
-            <span>Interactions</span>
-            <span>
-              {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions} actions
-            </span>
-          </div>
-          
-          {/* Inactivity Notice */}
-          {lastActivityTime && 
-           (new Date().getTime() - lastActivityTime.getTime()) / 1000 > 10 && (
-            <p className="text-xs text-gray-400">Inactive since: {inactiveTime}</p>
-          )}
+          <TaskProgressBar 
+            progress={taskProgress}
+            onComplete={() => console.log(`${name} completed task!`)}
+          />
         </div>
       </CardContent>
     </Card>

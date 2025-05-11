@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -34,7 +33,11 @@ const mockStudent: Student = {
       { id: 'focus-1', name: 'Area 1', percentage: 70 },
       { id: 'focus-2', name: 'Area 2', percentage: 30 }
     ],
-    handPreference: 'right'
+    handPreference: {
+      leftHandUsage: 25,
+      rightHandUsage: 75,
+      totalHandActions: 100
+    }
   }
 };
 

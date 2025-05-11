@@ -96,13 +96,15 @@ const ActivityBeacon = ({
     <div 
       className={`relative w-3 h-3 ${className}`}
       onClick={handleHelpClick}
+      role="status"
+      aria-live="polite"
+      aria-label={`Student is ${status}${ping ? ', new interaction detected' : ''}`}
     >
       {/* Static beacon */}
       <div 
         className={`w-3 h-3 rounded-full ${getStatusColor()} ${
           status === "help" ? "animate-pulse-light" : ""
         }`}
-        aria-label={`Student is ${status}`}
       />
       
       {/* Ping animation */}
@@ -153,7 +155,7 @@ const ActivityBeacon = ({
         <div className="absolute -top-1 -right-1">
           <AlertCircle 
             className="text-rose-500 w-3 h-3" 
-            aria-label="Help requested"
+            aria-hidden="true"
           />
         </div>
       )}

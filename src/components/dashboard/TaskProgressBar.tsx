@@ -46,7 +46,7 @@ const TaskProgressBar = ({
   }, [progress, isCompleted, onComplete]);
 
   return (
-    <div className={cn("w-full h-2 bg-gray-100 rounded-full overflow-hidden", className)}>
+    <div className={cn("w-full h-2 bg-gray-100 rounded-full overflow-hidden relative", className)}>
       <motion.div
         className={cn(
           "h-full rounded-full transition-colors",
