@@ -185,7 +185,13 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
     // Convert menu interactions to the expected format
     const menuTypes: Record<string, number> = {};
     (menuInteractionsData || []).forEach(item => {
-      menuTypes[item.menu_type] = item.count;
+      // Fix: menuTypes object uses menu_type as key and increments the count
+      // Since there's no count field, we'll count occurrences of each menu_type
+      if (!menuTypes[item.menu_type]) {
+        menuTypes[item.menu_type] = 1;
+      } else {
+        menuTypes[item.menu_type]++;
+      }
     });
     
     return {
