@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Classroom {
@@ -123,37 +124,35 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       console.error(`Error fetching metrics for student ${student.id}:`, metricsError);
     }
     
-    // Get activity history
-    const { data: activityData, error: activityError } = await supabase
-      .from("activity_history")
+    // Derive activity history from router_logs
+    const twoHoursAgo = new Date();
+    twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+    
+    const { data: activityLogsData, error: activityLogsError } = await supabase
+      .from("router_logs")
       .select("*")
-      .eq("student_id", student.id)
+      .eq("source_ip", student.ip_address)
+      .gte("timestamp", twoHoursAgo.toISOString())
       .order("timestamp", { ascending: true });
     
-    if (activityError) {
-      console.error(`Error fetching activity history for student ${student.id}:`, activityError);
+    if (activityLogsError) {
+      console.error(`Error fetching activity logs for student ${student.id}:`, activityLogsError);
     }
     
-    // Get focus areas
-    const { data: focusAreasData, error: focusAreasError } = await supabase
-      .from("focus_areas")
-      .select("*")
-      .eq("student_id", student.id)
-      .order("percentage", { ascending: false });
+    // Process logs to create activity history (sample activity levels over time)
+    const activityHistory = processActivityHistory(activityLogsData || []);
     
-    if (focusAreasError) {
-      console.error(`Error fetching focus areas for student ${student.id}:`, focusAreasError);
-    }
+    // Derive focus areas from router_logs
+    const focusAreas = processFocusAreas(activityLogsData || []);
     
-    // Get menu interactions
-    const { data: menuInteractionsData, error: menuInteractionsError } = await supabase
-      .from("menu_interactions")
-      .select("*")
-      .eq("student_id", student.id);
+    // Derive menu interactions from router_logs
+    const { menuTypes, menuInteractions } = processMenuInteractions(activityLogsData || []);
     
-    if (menuInteractionsError) {
-      console.error(`Error fetching menu interactions for student ${student.id}:`, menuInteractionsError);
-    }
+    // Derive block interactions from router_logs
+    const { blockGrabs, blockReleases } = processBlockInteractions(activityLogsData || []);
+    
+    // Derive hand usage from router_logs
+    const { leftHandUsage, rightHandUsage, totalHandActions } = processHandUsage(activityLogsData || []);
     
     // Create a metrics object with default values, then override with actual data if available
     const metrics = {
@@ -172,28 +171,6 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       ...metricsData
     };
     
-    const activityHistory = (activityData || []).map(item => ({
-      timestamp: item.timestamp,
-      value: item.value
-    }));
-    
-    const focusAreas = (focusAreasData || []).map(item => ({
-      area: item.area,
-      percentage: item.percentage
-    }));
-    
-    // Convert menu interactions to the expected format
-    const menuTypes: Record<string, number> = {};
-    (menuInteractionsData || []).forEach(item => {
-      // Fix: menuTypes object uses menu_type as key and increments the count
-      // Since there's no count field, we'll count occurrences of each menu_type
-      if (!menuTypes[item.menu_type]) {
-        menuTypes[item.menu_type] = 1;
-      } else {
-        menuTypes[item.menu_type]++;
-      }
-    });
-    
     return {
       id: student.id,
       name: student.name,
@@ -210,15 +187,15 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
         activityHistory,
         focusAreas,
         interactionCounts: {
-          blockGrabs: metrics.block_grabs,
-          blockReleases: metrics.block_releases,
-          menuInteractions: metrics.menu_interactions,
+          blockGrabs: blockGrabs || metrics.block_grabs,
+          blockReleases: blockReleases || metrics.block_releases,
+          menuInteractions: menuInteractions || metrics.menu_interactions,
           menuTypes
         },
         handPreference: {
-          leftHandUsage: metrics.left_hand_usage,
-          rightHandUsage: metrics.right_hand_usage,
-          totalHandActions: metrics.total_hand_actions
+          leftHandUsage: leftHandUsage || metrics.left_hand_usage,
+          rightHandUsage: rightHandUsage || metrics.right_hand_usage,
+          totalHandActions: totalHandActions || metrics.total_hand_actions
         }
       }
     };
@@ -249,4 +226,162 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       }
     };
   }
+};
+
+// Function to process router logs into activity history
+const processActivityHistory = (logs: any[]): { timestamp: number; value: number }[] => {
+  if (logs.length === 0) return [];
+  
+  // Group logs by 5-minute intervals and count interactions as engagement
+  const timeIntervals: Record<string, { count: number, timestamp: number }> = {};
+  const now = new Date();
+  const twoHoursAgo = new Date(now);
+  twoHoursAgo.setHours(now.getHours() - 2);
+  
+  // Create evenly spaced intervals for the last 2 hours
+  for (let i = 0; i < 24; i++) {
+    const time = new Date(twoHoursAgo);
+    time.setMinutes(twoHoursAgo.getMinutes() + (i * 5));
+    const timeKey = Math.floor(time.getTime() / (5 * 60 * 1000)) * (5 * 60 * 1000);
+    timeIntervals[timeKey] = { count: 0, timestamp: timeKey };
+  }
+  
+  // Count logs per interval
+  logs.forEach(log => {
+    const logTime = new Date(log.timestamp).getTime();
+    const intervalKey = Math.floor(logTime / (5 * 60 * 1000)) * (5 * 60 * 1000);
+    
+    if (timeIntervals[intervalKey]) {
+      timeIntervals[intervalKey].count += 1;
+    }
+  });
+  
+  // Convert counts to activity levels (0-100)
+  const maxCount = Math.max(...Object.values(timeIntervals).map(v => v.count), 1);
+  const activityHistory = Object.values(timeIntervals)
+    .sort((a, b) => a.timestamp - b.timestamp)
+    .map(({ count, timestamp }) => ({
+      timestamp,
+      value: Math.min(Math.round((count / maxCount) * 100), 100)
+    }));
+  
+  return activityHistory;
+};
+
+// Function to process router logs into focus areas
+const processFocusAreas = (logs: any[]): { area: string; percentage: number }[] => {
+  if (logs.length === 0) {
+    return [
+      { area: "Building", percentage: 45 },
+      { area: "Exploration", percentage: 30 },
+      { area: "Collaboration", percentage: 15 },
+      { area: "Physics", percentage: 10 }
+    ];
+  }
+  
+  // Categorize logs by content type
+  const areas: Record<string, number> = {
+    Building: 0,
+    Exploration: 0,
+    Collaboration: 0,
+    Physics: 0,
+    Menu: 0
+  };
+  
+  logs.forEach(log => {
+    // Categorize based on log_type and content
+    if (log.log_type === 'BlockAction' || log.content?.action === 'place' || log.content?.action === 'delete') {
+      areas.Building += 1;
+    } else if (log.log_type === 'Movement') {
+      areas.Exploration += 1;
+    } else if (log.log_type === 'MenuButton') {
+      areas.Menu += 1;
+    } else if (log.log_type === 'Interaction' && log.content?.target?.includes('physics')) {
+      areas.Physics += 1;
+    } else if (log.log_type === 'MultiplayerEvent' || (log.content && (log.content.type === 'voice' || log.content.type === 'chat'))) {
+      areas.Collaboration += 1;
+    } else {
+      // Default to exploration for unknown types
+      areas.Exploration += 1;
+    }
+  });
+  
+  // Calculate percentages
+  const total = Object.values(areas).reduce((sum, count) => sum + count, 0) || 1;
+  
+  return Object.entries(areas)
+    .map(([area, count]) => ({
+      area,
+      percentage: Math.round((count / total) * 100)
+    }))
+    .filter(area => area.percentage > 0)
+    .sort((a, b) => b.percentage - a.percentage);
+};
+
+// Function to process router logs into menu interactions
+const processMenuInteractions = (logs: any[]): { menuTypes: Record<string, number>, menuInteractions: number } => {
+  const menuTypes: Record<string, number> = {};
+  let menuInteractions = 0;
+  
+  logs.forEach(log => {
+    if (log.log_type === 'MenuButton' && log.content?.buttonName) {
+      menuInteractions++;
+      
+      // Extract the button name and normalize it
+      const buttonName = String(log.content.buttonName)
+        .replace(/Btn/gi, '')
+        .replace(/Button/gi, '');
+      
+      if (!menuTypes[buttonName]) {
+        menuTypes[buttonName] = 1;
+      } else {
+        menuTypes[buttonName]++;
+      }
+    }
+  });
+  
+  return { menuTypes, menuInteractions };
+};
+
+// Function to process router logs into block interactions
+const processBlockInteractions = (logs: any[]): { blockGrabs: number, blockReleases: number } => {
+  let blockGrabs = 0;
+  let blockReleases = 0;
+  
+  logs.forEach(log => {
+    if (log.log_type === 'BlockAction') {
+      if (log.content?.action === 'grab' || log.content?.action === 'pick') {
+        blockGrabs++;
+      } else if (log.content?.action === 'release' || log.content?.action === 'place') {
+        blockReleases++;
+      }
+    }
+  });
+  
+  return { blockGrabs, blockReleases };
+};
+
+// Function to process router logs into hand usage data
+const processHandUsage = (logs: any[]): { leftHandUsage: number, rightHandUsage: number, totalHandActions: number } => {
+  let leftHandUsage = 0;
+  let rightHandUsage = 0;
+  
+  logs.forEach(log => {
+    if (
+      (log.content?.hand === 'left' || log.content?.handedness === 'left') ||
+      (log.content?.controller === 'left')
+    ) {
+      leftHandUsage++;
+    } else if (
+      (log.content?.hand === 'right' || log.content?.handedness === 'right') ||
+      (log.content?.controller === 'right')
+    ) {
+      rightHandUsage++;
+    }
+    // If hand is not specified, we don't count it
+  });
+  
+  const totalHandActions = leftHandUsage + rightHandUsage;
+  
+  return { leftHandUsage, rightHandUsage, totalHandActions };
 };

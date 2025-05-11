@@ -87,29 +87,15 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
     // Fix: Type the RPC response explicitly to work around TypeScript limitations
     const { data, error } = await supabase
       .rpc('get_interaction_statistics')
-      .returns<{
-        id: string;
-        source_ip: string;
-        log_type: string;
-        interaction_count: number;
-        last_interaction: string | null;
-      }[]>();
+      .returns<InteractionStatistic[]>();
 
     if (error) {
       console.error("Error fetching interaction statistics:", error);
       throw new Error(`Failed to fetch interaction statistics: ${error.message}`);
     }
 
-    // Convert the data to our InteractionStatistic type
-    const typedData: InteractionStatistic[] = (data || []).map(item => ({
-      id: item.id || '',
-      source_ip: item.source_ip || '',
-      log_type: item.log_type || '',
-      interaction_count: item.interaction_count || 0,
-      last_interaction: item.last_interaction || null
-    }));
-
-    return typedData;
+    // Return the data directly since it's already typed correctly
+    return data || [];
   } catch (err) {
     console.error("Error in fetchInteractionStatistics:", err);
     // Return empty array instead of throwing to prevent UI crashes
