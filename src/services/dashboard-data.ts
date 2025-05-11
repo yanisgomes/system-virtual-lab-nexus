@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export interface Classroom {
@@ -19,6 +18,7 @@ export interface Student {
   headset_id: string;
   ip_address: string;
   avatar: string;
+  classroom_id: string;
   metrics: StudentMetrics;
 }
 
@@ -29,19 +29,20 @@ export interface StudentMetrics {
   move_distance: number;
   completed_tasks: number;
   task_success_rate: number;
-  activityHistory: { timestamp: number; value: number }[];
-  focusAreas: { area: string; percentage: number }[];
   interactionCounts: {
     blockGrabs: number;
-    blockReleases: number;
     menuInteractions: number;
-    menuTypes: Record<string, number>;
   };
-  handPreference: {
-    leftHandUsage: number;
-    rightHandUsage: number;
-    totalHandActions: number;
-  };
+  activityHistory: {
+    time: number;
+    value: number;
+  }[];
+  focusAreas: {
+    id: string;
+    name: string;
+    percentage: number;
+  }[];
+  handPreference: 'left' | 'right' | 'ambidextrous';
 }
 
 // Fetch classrooms from Supabase
@@ -177,6 +178,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       headset_id: student.headset_id,
       ip_address: student.ip_address,
       avatar: student.avatar,
+      classroom_id: student.classroom_id,
       metrics: {
         attention: metrics.attention,
         engagement: metrics.engagement,
@@ -188,9 +190,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
         focusAreas,
         interactionCounts: {
           blockGrabs: blockGrabs || metrics.block_grabs,
-          blockReleases: blockReleases || metrics.block_releases,
-          menuInteractions: menuInteractions || metrics.menu_interactions,
-          menuTypes
+          menuInteractions: menuInteractions || metrics.menu_interactions
         },
         handPreference: {
           leftHandUsage: leftHandUsage || metrics.left_hand_usage,
@@ -214,9 +214,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
         focusAreas: [],
         interactionCounts: {
           blockGrabs: 0,
-          blockReleases: 0,
-          menuInteractions: 0,
-          menuTypes: {}
+          menuInteractions: 0
         },
         handPreference: {
           leftHandUsage: 0,
@@ -229,7 +227,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
 };
 
 // Function to process router logs into activity history
-const processActivityHistory = (logs: any[]): { timestamp: number; value: number }[] => {
+const processActivityHistory = (logs: any[]): { time: number; value: number }[] => {
   if (logs.length === 0) return [];
   
   // Group logs by 5-minute intervals and count interactions as engagement
@@ -261,7 +259,7 @@ const processActivityHistory = (logs: any[]): { timestamp: number; value: number
   const activityHistory = Object.values(timeIntervals)
     .sort((a, b) => a.timestamp - b.timestamp)
     .map(({ count, timestamp }) => ({
-      timestamp,
+      time: timestamp,
       value: Math.min(Math.round((count / maxCount) * 100), 100)
     }));
   
@@ -269,13 +267,13 @@ const processActivityHistory = (logs: any[]): { timestamp: number; value: number
 };
 
 // Function to process router logs into focus areas
-const processFocusAreas = (logs: any[]): { area: string; percentage: number }[] => {
+const processFocusAreas = (logs: any[]): { id: string; name: string; percentage: number }[] => {
   if (logs.length === 0) {
     return [
-      { area: "Building", percentage: 45 },
-      { area: "Exploration", percentage: 30 },
-      { area: "Collaboration", percentage: 15 },
-      { area: "Physics", percentage: 10 }
+      { id: "Building", name: "Building", percentage: 45 },
+      { id: "Exploration", name: "Exploration", percentage: 30 },
+      { id: "Collaboration", name: "Collaboration", percentage: 15 },
+      { id: "Physics", name: "Physics", percentage: 10 }
     ];
   }
   
@@ -311,7 +309,8 @@ const processFocusAreas = (logs: any[]): { area: string; percentage: number }[] 
   
   return Object.entries(areas)
     .map(([area, count]) => ({
-      area,
+      id: area,
+      name: area,
       percentage: Math.round((count / total) * 100)
     }))
     .filter(area => area.percentage > 0)

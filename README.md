@@ -8,7 +8,7 @@ A web-based teacher dashboard that monitors students' VR headsets in real-time.
 - Real-time monitoring of student activity in VR
 - Visual indicators for student attention and engagement
 - Notification system for when students need help
-- Activity timeline with sparkline visualization
+- Activity beacon with visual feedback on interactions
 - Predictive status indicators based on interaction patterns
 
 ## Components
@@ -18,8 +18,9 @@ A web-based teacher dashboard that monitors students' VR headsets in real-time.
 The StudentCard component displays real-time student activity with:
 
 - Student profile information (name, headset ID, IP)
-- Real-time interaction sparkline (last 2 minutes)
+- Real-time activity beacon (green for active, grey for idle, red for help)
 - Predictive status badge (Active, Hesitant, Persistent, Struggling, Idle)
+- Task progress bar that fills as students interact with the VR environment
 - Inactivity timer when no events received for 10+ seconds
 - Task completion statistics
 
@@ -35,46 +36,98 @@ import StudentCard from "@/components/dashboard/StudentCard";
 />
 ```
 
-### InteractionSparkline
+### ActivityBeacon
 
-The InteractionSparkline component shows real-time activity as a sparkline graph:
+The ActivityBeacon component shows real-time connection state as a small LED indicator:
 
-- Real-time updates from Supabase router_logs table
-- Animated transitions for new data points
-- Configurable time window (default: 120 seconds)
-- Automatic status calculations
-- Inactivity detection and timer
+- Green pulsing beacon for active students with concentric circles on new interactions
+- Grey beacon for idle students (no interactions for 3+ minutes)
+- Red beacon for students who have requested help
+- Respects user preferences for reduced motion
 
 #### Usage
 
 ```jsx
-import InteractionSparkline from "@/components/dashboard/InteractionSparkline";
+import ActivityBeacon from "@/components/dashboard/ActivityBeacon";
 
 // In your component
-<InteractionSparkline 
-  sourceIp={ipAddress} 
-  windowSize={120} // 2 minutes
-  height={36} // Optional: adjust height
-  className="my-custom-class" // Optional: additional styling
+<ActivityBeacon
+  lastInteractionTime={lastActivityTime}
+  helpRequested={helpRequested}
+  onHelpAcknowledged={acknowledgeHelp}
+  className="your-custom-class"
 />
+```
+
+### TaskProgressBar
+
+The TaskProgressBar component visually represents task completion progress:
+
+- Increments by 5% for standard interactions
+- Increments by 20% for PortAdded events
+- Animated transitions for smooth updates
+- Success flash when reaching 100%
+- Auto-resets after completion
+
+#### Usage
+
+```jsx
+import TaskProgressBar from "@/components/dashboard/TaskProgressBar";
+
+// In your component
+<TaskProgressBar
+  progress={taskProgress}
+  onComplete={handleTaskComplete}
+  className="your-custom-class"
+/>
+```
+
+### StatusBadge
+
+The StatusBadge component displays a color-coded indicator of student status:
+
+- Active (green): 2+ events in last 10s
+- Hesitant (amber): 1-3 events in last 60s with 20s+ gaps
+- Persistent (blue): Steady low-rate activity
+- Struggling (red): Help requested or frequent errors
+- Idle (grey): No activity for 3+ minutes
+
+#### Usage
+
+```jsx
+import StatusBadge from "@/components/dashboard/StatusBadge";
+import { useStudentActivity } from "@/hooks/use-student-activity";
+
+// In your component
+const { status } = useStudentActivity(studentIpAddress);
+
+<StatusBadge status={status} />
 ```
 
 ## Performance Tips
 
 - Components use React.memo to prevent unnecessary re-renders
-- SVG rendering is optimized for performance
+- Animations are optimized for performance
 - Subscriptions are properly cleaned up on component unmount
 - For large classrooms, consider:
   - Using react-window for virtualized list rendering
   - Implementing pagination or filtering to limit displayed students
-  - Adjusting windowSize to a smaller value (60s instead of 120s)
+  - Reducing the update frequency of status evaluations
 
 ## Development
 
-### Running Storybook
+### Manual Testing
 
-```
-npm run storybook
+The StudentCardDemo component provides interactive controls to test real-time functionality:
+
+```jsx
+import StudentCardDemo from "@/components/dashboard/StudentCardDemo";
+
+// In your component
+<StudentCardDemo />
 ```
 
-The StudentCard storybook includes an interactive "Simulate Interaction" button to test real-time functionality without needing actual VR headsets.
+This includes buttons to simulate:
+- Standard interactions
+- Port added events (larger progress increments)
+- Help requests (triggers red beacon)
