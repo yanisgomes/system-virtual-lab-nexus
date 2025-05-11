@@ -8,6 +8,11 @@ import ActivityTabContent from "./ActivityTabContent";
 import InteractionsTabContent from "./InteractionsTabContent";
 import ChatTab from "../chat/ChatTab";
 
+interface MenuTypeData {
+  name: string;
+  value: number;
+}
+
 interface StudentDetailModalProps {
   student: Student | null;
   open: boolean;
@@ -22,7 +27,7 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
 
   // Format timestamp for the chart
   const activityData = metrics.activityHistory.map((item) => ({
-    time: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    time: new Date(item.timestamp || item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     value: item.value
   }));
 
@@ -33,15 +38,15 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
   ].filter(item => item.value > 0);
 
   // Prepare menu interaction data
-  const menuTypeData = Object.entries(metrics.interactionCounts.menuTypes).map(([key, value]) => ({
+  const menuTypeData: MenuTypeData[] = Object.entries(metrics.interactionCounts.menuTypes || {}).map(([key, value]) => ({
     name: key.replace('Btn', ''),
-    value
+    value: value as number
   }));
 
   // Prepare block interaction data
   const blockInteractionData = [
     { name: 'Grabs', value: metrics.interactionCounts.blockGrabs },
-    { name: 'Releases', value: metrics.interactionCounts.blockReleases }
+    { name: 'Releases', value: metrics.interactionCounts.blockReleases || 0 }
   ];
 
   return (

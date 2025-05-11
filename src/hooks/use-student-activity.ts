@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RouterLog } from '@/services/log-service';
+import { Json } from '@/integrations/supabase/types';
 
 export type ActivityStatus = 'active' | 'idle' | 'hesitant' | 'persistent' | 'struggling';
 
@@ -40,6 +40,18 @@ export function useStudentActivity(sourceIp: string): StudentActivityResult {
     }
   }, []);
   
+  // Helper function to extract button name from Json content
+  const getButtonName = (content: Json | null): string | null => {
+    if (!content) return null;
+    
+    if (typeof content === 'object' && content !== null) {
+      // If content is an object, try to access buttonName property
+      return (content as Record<string, any>).buttonName || null;
+    }
+    
+    return null;
+  };
+  
   // Supabase realtime subscription
   useEffect(() => {
     if (!sourceIp) return;
@@ -69,7 +81,7 @@ export function useStudentActivity(sourceIp: string): StudentActivityResult {
             log.log_type === 'MenuButton' || 
             log.log_type === 'MessageButton'
           ) {
-            const buttonName = log.content?.buttonName || '';
+            const buttonName = getButtonName(log.content);
             if (
               typeof buttonName === 'string' && 
               buttonName.toLowerCase().includes('help')
@@ -110,7 +122,7 @@ export function useStudentActivity(sourceIp: string): StudentActivityResult {
           
           // Check for help requests in existing logs
           const hasHelp = data.some(log => {
-            const buttonName = log.content?.buttonName || '';
+            const buttonName = getButtonName(log.content);
             return (
               (log.log_type === 'HelpRequest' || 
                log.log_type === 'MenuButton' || 

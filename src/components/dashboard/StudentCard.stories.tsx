@@ -12,6 +12,7 @@ const mockStudent = {
   ip_address: '192.168.1.101',
   headset_id: 'VR-102',
   avatar: '/placeholder.svg',
+  classroom_id: 'class-001', // Added classroom_id
   metrics: {
     attention: 75,
     engagement: 82,

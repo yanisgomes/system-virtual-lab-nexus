@@ -115,13 +115,17 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
 
 export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterLog | null> => {
   try {
-    // Fix: Use properly typed response
+    // Fix: Type the response properly
     const { error, data } = await supabase
       .from('router_logs')
       .insert([
         {
-          ...logData,
           timestamp: logData.timestamp || new Date().toISOString(),
+          source_ip: logData.source_ip,
+          log_type: logData.log_type,
+          content: logData.content,
+          time_seconds: logData.time_seconds,
+          raw_log: logData.raw_log
         }
       ])
       .select()

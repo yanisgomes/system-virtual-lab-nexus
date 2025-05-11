@@ -31,18 +31,25 @@ export interface StudentMetrics {
   task_success_rate: number;
   interactionCounts: {
     blockGrabs: number;
+    blockReleases?: number;
     menuInteractions: number;
+    menuTypes?: Record<string, number>;
   };
   activityHistory: {
     time: number;
     value: number;
+    timestamp?: string;
   }[];
   focusAreas: {
     id: string;
     name: string;
     percentage: number;
   }[];
-  handPreference: 'left' | 'right' | 'ambidextrous';
+  handPreference: {
+    leftHandUsage: number;
+    rightHandUsage: number;
+    totalHandActions: number;
+  };
 }
 
 // Fetch classrooms from Supabase
@@ -125,21 +132,6 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
       console.error(`Error fetching metrics for student ${student.id}:`, metricsError);
     }
     
-    // Derive activity history from router_logs
-    const twoHoursAgo = new Date();
-    twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
-    
-    const { data: activityLogsData, error: activityLogsError } = await supabase
-      .from("router_logs")
-      .select("*")
-      .eq("source_ip", student.ip_address)
-      .gte("timestamp", twoHoursAgo.toISOString())
-      .order("timestamp", { ascending: true });
-    
-    if (activityLogsError) {
-      console.error(`Error fetching activity logs for student ${student.id}:`, activityLogsError);
-    }
-    
     // Process logs to create activity history (sample activity levels over time)
     const activityHistory = processActivityHistory(activityLogsData || []);
     
@@ -190,7 +182,9 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
         focusAreas,
         interactionCounts: {
           blockGrabs: blockGrabs || metrics.block_grabs,
-          menuInteractions: menuInteractions || metrics.menu_interactions
+          blockReleases: blockReleases || metrics.block_releases,
+          menuInteractions: menuInteractions || metrics.menu_interactions,
+          menuTypes
         },
         handPreference: {
           leftHandUsage: leftHandUsage || metrics.left_hand_usage,
@@ -214,7 +208,9 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
         focusAreas: [],
         interactionCounts: {
           blockGrabs: 0,
-          menuInteractions: 0
+          blockReleases: 0,
+          menuInteractions: 0,
+          menuTypes: {}
         },
         handPreference: {
           leftHandUsage: 0,
@@ -227,7 +223,7 @@ const getStudentWithMetrics = async (student: any): Promise<Student> => {
 };
 
 // Function to process router logs into activity history
-const processActivityHistory = (logs: any[]): { time: number; value: number }[] => {
+const processActivityHistory = (logs: any[]): { time: number; value: number; timestamp?: string }[] => {
   if (logs.length === 0) return [];
   
   // Group logs by 5-minute intervals and count interactions as engagement
@@ -260,7 +256,8 @@ const processActivityHistory = (logs: any[]): { time: number; value: number }[] 
     .sort((a, b) => a.timestamp - b.timestamp)
     .map(({ count, timestamp }) => ({
       time: timestamp,
-      value: Math.min(Math.round((count / maxCount) * 100), 100)
+      value: Math.min(Math.round((count / maxCount) * 100), 100),
+      timestamp: new Date(timestamp).toISOString()
     }));
   
   return activityHistory;

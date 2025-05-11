@@ -75,7 +75,8 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
         }, 0) / students.length;
 
         return {
-          time: new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          time: item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 
+                 new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           value: Math.round(averageValue),
         };
       });
@@ -98,16 +99,17 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
     
     students.forEach(student => {
       student.metrics.focusAreas.forEach(area => {
-        if (!focusAreaMap[area.area]) {
-          focusAreaMap[area.area] = [];
+        if (!focusAreaMap[area.name]) {
+          focusAreaMap[area.name] = [];
         }
-        focusAreaMap[area.area].push(area.percentage);
+        focusAreaMap[area.name].push(area.percentage);
       });
     });
     
     return Object.entries(focusAreaMap)
-      .map(([area, percentages]) => ({
-        area,
+      .map(([name, percentages]) => ({
+        id: name,
+        name,
         percentage: Math.round(percentages.reduce((sum, val) => sum + val, 0) / percentages.length)
       }))
       .sort((a, b) => b.percentage - a.percentage)
