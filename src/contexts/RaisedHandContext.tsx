@@ -1,6 +1,24 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { RealtimeChannel } from '@supabase/supabase-js';
+import { toast } from 'sonner';
+
+// Define a type for the Postgres Insert payload we'll receive from Supabase
+interface PostgresInsertPayload {
+  new: {
+    id: string;
+    timestamp: string;
+    source_ip: string;
+    log_type: string;
+    content: {
+      buttonName?: string;
+      [key: string]: any;
+    };
+    time_seconds: number;
+    raw_log?: string;
+  };
+}
 
 interface RaisedHandState {
   raisedHands: Record<string, boolean>;
@@ -13,7 +31,9 @@ const RaisedHandContext = createContext<RaisedHandState | undefined>(undefined);
 export function RaisedHandProvider({ children }: { children: ReactNode }) {
   const [raisedHands, setRaisedHands] = useState<Record<string, boolean>>({});
   const [helpDots, setHelpDots] = useState<Record<string, boolean>>({});
-  const [timeouts, setTimeouts] = useState<Record<string, NodeJS.Timeout>>({});
+  
+  // Use a ref to store timeouts so we don't re-subscribe on every state change
+  const timeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   useEffect(() => {
     // Load persisted help dots from local storage on initial mount
@@ -27,95 +47,113 @@ export function RaisedHandProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Set up Supabase realtime subscription for router_logs
+    // Handler function for processing new router log entries
+    const handleLogInsert = async (payload: PostgresInsertPayload) => {
+      console.log("Router log insert detected:", payload);
+      
+      // Extract the content and check if it contains 'Help'
+      const content = payload.new.content;
+      const buttonName = content?.buttonName;
+      
+      if (buttonName && typeof buttonName === 'string' && buttonName.includes('Help')) {
+        console.log("Help button press detected:", buttonName);
+        
+        // Get the source IP
+        const sourceIp = payload.new.source_ip;
+        
+        // Query for the student with this IP
+        const { data: studentData, error } = await supabase
+          .from('students')
+          .select('id, name')
+          .eq('ip_address', sourceIp)
+          .single();
+        
+        if (error) {
+          console.error('Error finding student:', error);
+          toast.error(`Failed to identify student with IP: ${sourceIp}`);
+          return;
+        }
+        
+        if (!studentData) {
+          console.log('No student found with IP:', sourceIp);
+          toast.warning(`No registered student found with IP: ${sourceIp}`);
+          return;
+        }
+        
+        console.log(`Student ${studentData.name} raised hand`);
+        
+        // Debounce: Only set raised hand if not already raised
+        setRaisedHands(prev => {
+          // If already raised, don't update
+          if (prev[studentData.id]) return prev;
+          
+          // Announce for screen readers
+          const announcer = document.getElementById('raised-hand-announcer');
+          if (announcer) {
+            announcer.textContent = `Student ${studentData.name} is requesting help`;
+          }
+          
+          // Clear after 5 seconds and show help dot
+          if (timeoutsRef.current[studentData.id]) {
+            clearTimeout(timeoutsRef.current[studentData.id]);
+          }
+          
+          timeoutsRef.current[studentData.id] = setTimeout(() => {
+            setRaisedHands(prevHands => {
+              const newState = { ...prevHands };
+              delete newState[studentData.id];
+              return newState;
+            });
+            
+            // Add to help dots
+            setHelpDots(prevDots => {
+              const newDots = { ...prevDots, [studentData.id]: true };
+              // Persist help dots in local storage
+              localStorage.setItem('helpDots', JSON.stringify(newDots));
+              return newDots;
+            });
+            
+            // Clean up timeout reference
+            delete timeoutsRef.current[studentData.id];
+          }, 5000);
+          
+          // Return the new state with raised hand
+          return { ...prev, [studentData.id]: true };
+        });
+      }
+    };
+
+    // Set up Supabase realtime subscription for router_logs - ONE TIME ONLY
     const channel = supabase
-      .channel('router-logs-changes')
+      .channel('router-logs-hand')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'router_logs',
-          filter: 'log_type=eq.MenuButton'
+          // Accept both possible values for log_type
+          filter: 'log_type=in.(MenuButton,MenuButtonPress)'
         },
-        async (payload) => {
-          // Extract the content and check if it contains 'Help'
-          const content = payload.new.content;
-          const buttonName = content?.buttonName;
-          
-          if (buttonName && typeof buttonName === 'string' && buttonName.includes('Help')) {
-            // Get the source IP
-            const sourceIp = payload.new.source_ip;
-            
-            // Query for the student with this IP
-            const { data: studentData, error } = await supabase
-              .from('students')
-              .select('id, name')
-              .eq('ip_address', sourceIp)
-              .single();
-            
-            if (error) {
-              console.error('Error finding student:', error);
-              return;
-            }
-            
-            if (!studentData) {
-              console.log('No student found with IP:', sourceIp);
-              return;
-            }
-            
-            // Debounce: Only set raised hand if not already raised
-            if (!raisedHands[studentData.id]) {
-              // Announce for screen readers
-              const announcer = document.getElementById('raised-hand-announcer');
-              if (announcer) {
-                announcer.textContent = `Student ${studentData.name} is requesting help`;
-              }
-              
-              // Set raised hand state
-              setRaisedHands(prev => ({ ...prev, [studentData.id]: true }));
-              
-              // Clear after 5 seconds and show help dot
-              if (timeouts[studentData.id]) {
-                clearTimeout(timeouts[studentData.id]);
-              }
-              
-              const timeout = setTimeout(() => {
-                setRaisedHands(prev => {
-                  const newState = { ...prev };
-                  delete newState[studentData.id];
-                  return newState;
-                });
-                
-                // Add to help dots
-                setHelpDots(prev => {
-                  const newDots = { ...prev, [studentData.id]: true };
-                  // Persist help dots in local storage
-                  localStorage.setItem('helpDots', JSON.stringify(newDots));
-                  return newDots;
-                });
-                
-                // Clean up timeout
-                setTimeouts(prev => {
-                  const newTimeouts = { ...prev };
-                  delete newTimeouts[studentData.id];
-                  return newTimeouts;
-                });
-              }, 5000);
-              
-              setTimeouts(prev => ({ ...prev, [studentData.id]: timeout }));
-            }
-          }
-        }
+        handleLogInsert
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Realtime subscription status:", status);
+        if (status === 'SUBSCRIBED') {
+          console.log("Successfully subscribed to router_logs changes");
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error("Error subscribing to router_logs changes");
+          toast.error("Failed to connect to realtime updates");
+        }
+      });
     
-    // Clean up on unmount
+    // Clean up on unmount - clear ALL timeouts and channel
     return () => {
-      Object.values(timeouts).forEach(timeout => clearTimeout(timeout));
+      Object.values(timeoutsRef.current).forEach(timeout => clearTimeout(timeout));
+      console.log("Cleaning up realtime subscription");
       supabase.removeChannel(channel);
     };
-  }, [raisedHands, timeouts]);
+  }, []); // Empty dependency array - we attach ONCE
   
   const clearHelpDot = (studentId: string) => {
     setHelpDots(prev => {
