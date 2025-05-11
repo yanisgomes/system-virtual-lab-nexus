@@ -1,7 +1,7 @@
+
 import { useEffect, useState } from "react";
-import { Student, ClassroomMetrics, fetchClassroomData } from "@/services/dashboard-data";
+import { Student, fetchClassroomData } from "@/services/dashboard-data";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import MetricCard from "./MetricCard";
 import EnhancedStudentCard from "./EnhancedStudentCard";
 import StudentDetailModal from "./StudentDetailModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,101 +93,20 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
     });
   };
 
-  // Keeping the function to avoid breaking code that might use it elsewhere
-  const generateAggregatedFocusAreas = () => {
-    const focusAreaMap: Record<string, number[]> = {};
-    
-    students.forEach(student => {
-      student.metrics.focusAreas.forEach(area => {
-        if (!focusAreaMap[area.name]) {
-          focusAreaMap[area.name] = [];
-        }
-        focusAreaMap[area.name].push(area.percentage);
-      });
-    });
-    
-    return Object.entries(focusAreaMap)
-      .map(([name, percentages]) => ({
-        id: name,
-        name,
-        percentage: Math.round(percentages.reduce((sum, val) => sum + val, 0) / percentages.length)
-      }))
-      .sort((a, b) => b.percentage - a.percentage)
-      .slice(0, 4); // Take top 4 focus areas
-  };
-
   const chartData = generateChartData();
-  
-  // Still calculating focus areas to avoid breaking any code that might reference it
-  generateAggregatedFocusAreas();
 
   return (
     <RaisedHandProvider>
       <div className="flex-1 p-6 overflow-auto">
-        <div className="mb-8">
+        <div className="mb-6">
           <h1 className="text-2xl font-bold mb-1">Classroom Dashboard</h1>
           <p className="text-muted-foreground">
             Monitor real-time VR activity and student engagement
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <MetricCard
-            title="Total Engagement"
-            value={`${metrics.totalEngagement}%`}
-            trend={2}
-            isLoading={isLoading}
-          />
-          <MetricCard
-            title="Average Attention"
-            value={`${metrics.averageAttention}%`}
-            trend={-1}
-            isLoading={isLoading}
-          />
-          <MetricCard
-            title="Active Students"
-            value={metrics.activeStudents}
-            description={`${metrics.activeStudents} students connected`}
-            isLoading={isLoading}
-          />
-          <MetricCard
-            title="Session Duration"
-            value={`${metrics.sessionDuration} min`}
-            isLoading={isLoading}
-          />
-        </div>
-
-        {/* Removed the grid with the focus areas card, keeping only the chart card */}
+        {/* Student Metrics grid - moved to the top */}
         <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Classroom Engagement Levels</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="time" />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="value"
-                      name="Attention Level"
-                      stroke="#9b87f5"
-                      strokeWidth={2}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6, fill: "#7E69AB" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
           <h2 className="text-xl font-bold mb-4">Student Metrics</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {isLoading ? (
@@ -219,6 +138,36 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
               ))
             )}
           </div>
+        </div>
+
+        {/* Classroom Engagement Levels chart - moved below student grid */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Classroom Engagement Levels</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="time" />
+                    <YAxis domain={[0, 100]} />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      name="Attention Level"
+                      stroke="#9b87f5"
+                      strokeWidth={2}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6, fill: "#7E69AB" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <StudentDetailModal

@@ -70,28 +70,27 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
  * @param log The log object to create
  * @returns Promise with the created log
  */
-export const createRouterLogs = async (log: Omit<RouterLog, 'id' | 'timestamp'>): Promise<RouterLog> => {
+export const createRouterLogs = async (routerLog: RouterLogInput): Promise<void> => {
   try {
-    // Calculate time_seconds if not provided
-    const logData = {
-      ...log,
-      time_seconds: log.time_seconds || 0
-    };
-
-    const { data, error } = await supabase
-      .from('router_logs')
-      .insert(logData)
-      .select()
-      .single();
+    // Insert log
+    await supabase.from('router_logs').insert([
+      {
+        source_ip: routerLog.source_ip,
+        log_type: routerLog.log_type,
+        content: routerLog.content,
+        time_seconds: routerLog.time_seconds || 0
+      }
+    ]);
     
-    if (error) {
-      console.error("Error creating log:", error);
-      throw new Error(`Failed to create log: ${error.message}`);
-    }
+    // Call RPC function to increment interaction stats
+    await supabase.rpc('increment_interaction_stat', {
+      source_ip_param: routerLog.source_ip,
+      log_type_param: routerLog.log_type,
+      content_param: routerLog.content
+    });
     
-    return data as RouterLog;
   } catch (error) {
-    console.error("Exception while creating log:", error);
+    console.error('Error creating router log:', error);
     throw error;
   }
 };
