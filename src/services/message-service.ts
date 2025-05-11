@@ -29,7 +29,8 @@ export const fetchMessages = async (studentId: string, limit = 50): Promise<Mess
       throw new Error(`Failed to fetch messages: ${error.message}`);
     }
 
-    return data || [];
+    // Cast the data to ensure it matches our expected type
+    return (data as Message[]) || [];
   } catch (err) {
     console.error("Error in fetchMessages:", err);
     throw err;
@@ -42,7 +43,7 @@ export const sendTeacherMessage = async ({ student_id, content }: Omit<MessageIn
     
     const { data, error } = await supabase
       .from("messages")
-      .insert({ student_id, sender: 'teacher', content })
+      .insert({ student_id, sender: 'teacher' as const, content })
       .select()
       .single();
 
@@ -51,7 +52,8 @@ export const sendTeacherMessage = async ({ student_id, content }: Omit<MessageIn
       throw new Error(`Failed to send message: ${error.message}`);
     }
 
-    return data;
+    // Cast the returned data to ensure it matches our expected type
+    return data as Message;
   } catch (err) {
     console.error("Error in sendTeacherMessage:", err);
     throw err;
