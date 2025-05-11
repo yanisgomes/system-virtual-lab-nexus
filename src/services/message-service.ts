@@ -11,6 +11,7 @@ export interface Message {
 
 export interface MessageInput {
   student_id: string;
+  sender: "teacher" | "student";
   content: string;
 }
 
@@ -29,16 +30,16 @@ export const fetchMessages = async (studentId: string, limit = 50): Promise<Mess
     }
 
     // Cast the data to ensure it matches our expected type
-    return (data as unknown as Message[]) || [];
+    return (data as Message[]) || [];
   } catch (err) {
     console.error("Error in fetchMessages:", err);
     throw err;
   }
 };
 
-export const sendTeacherMessage = async ({ student_id, content }: MessageInput): Promise<Message> => {
+export const sendTeacherMessage = async ({ student_id, content }: Omit<MessageInput, "sender">): Promise<Message | null> => {
   try {
-    if (!content.trim()) throw new Error("Message content cannot be empty");
+    if (!content.trim()) return null;
     
     const { data, error } = await supabase
       .from("messages")
@@ -52,7 +53,7 @@ export const sendTeacherMessage = async ({ student_id, content }: MessageInput):
     }
 
     // Cast the returned data to ensure it matches our expected type
-    return data as unknown as Message;
+    return data as Message;
   } catch (err) {
     console.error("Error in sendTeacherMessage:", err);
     throw err;

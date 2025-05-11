@@ -1,59 +1,139 @@
+
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
-export interface Message {
+export interface RouterLog {
   id: string;
-  student_id: string;
-  sender: "teacher" | "student";
-  content: string;
-  created_at: string;
+  timestamp: string;
+  source_ip: string;
+  log_type: string;
+  content: Json;
+  time_seconds: number;
+  raw_log?: string;
 }
 
-export interface MessageInput {
-  student_id: string;
-  content: string;
+export interface InteractionStatistic {
+  id: string;
+  source_ip: string;
+  log_type: string;
+  interaction_count: number;
+  last_interaction: string | null;
 }
 
-export const fetchMessages = async (studentId: string, limit = 50): Promise<Message[]> => {
+// Define the RouterLogInput interface that was missing
+export interface RouterLogInput {
+  timestamp?: string;
+  source_ip: string;
+  log_type: string;
+  content: Json;
+  time_seconds: number;
+  raw_log?: string;
+}
+
+export const fetchLatestLogs = async (limit = 100): Promise<RouterLog[]> => {
   try {
     const { data, error } = await supabase
-      .from("messages")
+      .from("router_logs")
       .select("*")
-      .eq("student_id", studentId)
-      .order("created_at", { ascending: false })
+      .order("timestamp", { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error("Error fetching messages:", error);
-      throw new Error(`Failed to fetch messages: ${error.message}`);
+      console.error("Error fetching logs:", error);
+      throw new Error(`Failed to fetch logs: ${error.message}`);
     }
 
-    // Cast the data to ensure it matches our expected type
-    return (data as unknown as Message[]) || [];
+    return data || [];
   } catch (err) {
-    console.error("Error in fetchMessages:", err);
+    console.error("Error in fetchLatestLogs:", err);
     throw err;
   }
 };
 
-export const sendTeacherMessage = async ({ student_id, content }: MessageInput): Promise<Message> => {
+export const fetchLogsByType = async (logType: string, limit = 50): Promise<RouterLog[]> => {
   try {
-    if (!content.trim()) throw new Error("Message content cannot be empty");
-    
     const { data, error } = await supabase
-      .from("messages")
-      .insert({ student_id, sender: 'teacher' as const, content })
-      .select()
+      .from("router_logs")
+      .select("*")
+      .eq("log_type", logType)
+      .order("timestamp", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error(`Error fetching logs of type ${logType}:`, error);
+      throw new Error(`Failed to fetch logs by type: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchLogsByType:", err);
+    throw err;
+  }
+};
+
+export const fetchLogsByIp = async (sourceIp: string, limit = 50): Promise<RouterLog[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("router_logs")
+      .select("*")
+      .eq("source_ip", sourceIp)
+      .order("timestamp", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error(`Error fetching logs for IP ${sourceIp}:`, error);
+      throw new Error(`Failed to fetch logs by IP: ${error.message}`);
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchLogsByIp:", err);
+    throw err;
+  }
+};
+
+export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
+  try {
+    // Fix: Type the RPC response explicitly to work around TypeScript limitations
+    const { data, error } = await supabase
+      .rpc('get_interaction_statistics')
+      .returns<InteractionStatistic[]>();
+
+    if (error) {
+      console.error("Error fetching interaction statistics:", error);
+      throw new Error(`Failed to fetch interaction statistics: ${error.message}`);
+    }
+
+    // Return the data directly since it's already typed correctly
+    return data || [];
+  } catch (err) {
+    console.error("Error in fetchInteractionStatistics:", err);
+    // Return empty array instead of throwing to prevent UI crashes
+    return [];
+  }
+};
+
+export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterLog | null> => {
+  try {
+    const { error, data } = await supabase
+      .from('router_logs')
+      .insert([
+        {
+          ...logData,
+          timestamp: logData.timestamp || new Date().toISOString(),
+        }
+      ])
+      .select('*')
       .single();
 
     if (error) {
-      console.error("Error sending message:", error);
-      throw new Error(`Failed to send message: ${error.message}`);
+      console.error('Error creating router log:', error);
+      return null;
     }
 
-    // Cast the returned data to ensure it matches our expected type
-    return data as unknown as Message;
-  } catch (err) {
-    console.error("Error in sendTeacherMessage:", err);
-    throw err;
+    return data as RouterLog;
+  } catch (error) {
+    console.error('Error creating router log:', error);
+    return null;
   }
 };
