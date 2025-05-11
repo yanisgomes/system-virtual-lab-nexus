@@ -27,6 +27,14 @@ interface InteractionsTabContentProps {
 
 const COLORS = ['#9b87f5', '#7E69AB', '#f59b87', '#87f59b'];
 
+// Menu-specific color palette
+const MENU_COLORS: Record<string, string> = {
+  Info: "#5C9967",   // forest-green
+  Energy: "#FF9900", // vibrant orange
+  Help: "#E8EFF7",   // soft lavender-gray
+  Matter: "#00CCFF"  // bright cyan
+};
+
 const InteractionsTabContent = ({
   handPreferenceData,
   menuTypeData,
@@ -83,7 +91,16 @@ const InteractionsTabContent = ({
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Bar dataKey="value" fill="#9b87f5" />
+                  {/* Use dynamic color mapping for each bar based on menu name */}
+                  {menuTypeData.map((entry) => (
+                    <Bar 
+                      key={entry.name}
+                      dataKey="value" 
+                      name={entry.name}
+                      fill={MENU_COLORS[entry.name] || "#9b87f5"} 
+                      className="animate-in fade-in duration-500"
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </div>

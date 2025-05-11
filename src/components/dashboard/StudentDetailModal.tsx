@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Student } from "@/services/dashboard-data";
@@ -19,6 +18,13 @@ interface StudentDetailModalProps {
   onClose: () => void;
 }
 
+// Helper to format menu button names for consistent color mapping
+const formatMenuName = (name: string): string => {
+  // Strip "Btn" suffix and capitalize first letter
+  const cleanName = name.replace('Btn', '');
+  return cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+};
+
 const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps) => {
   if (!student) return null;
 
@@ -37,9 +43,9 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
     { name: 'Right Hand', value: metrics.handPreference.rightHandUsage }
   ].filter(item => item.value > 0);
 
-  // Prepare menu interaction data
+  // Prepare menu interaction data with formatted names for consistent color mapping
   const menuTypeData: MenuTypeData[] = Object.entries(metrics.interactionCounts.menuTypes || {}).map(([key, value]) => ({
-    name: key.replace('Btn', ''),
+    name: formatMenuName(key),
     value: value as number
   }));
 

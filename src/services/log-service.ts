@@ -46,22 +46,22 @@ export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> 
 
 /**
  * Fetches interaction statistics from the database
- * @returns Promise with array of InteractionStatistic objects
+ * @returns Promise<InteractionStatistic[]>
  */
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
   try {
     const { data, error } = await supabase
-      .rpc('get_interaction_statistics');
+      .rpc('get_interaction_statistics', {});
     
     if (error) {
       console.error("Error fetching statistics:", error);
-      throw new Error(`Failed to fetch statistics: ${error.message}`);
+      return [];
     }
     
-    return (data || []) as InteractionStatistic[];
+    return data || [];
   } catch (error) {
-    console.error("Exception while fetching statistics:", error);
-    throw error;
+    console.error("Error in fetchInteractionStatistics:", error);
+    return [];
   }
 };
 
