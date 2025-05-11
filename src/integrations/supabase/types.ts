@@ -117,60 +117,18 @@ export type Database = {
           },
         ]
       }
-      interaction_statistics: {
-        Row: {
-          id: string
-          interaction_count: number
-          last_interaction: string | null
-          log_type: string
-          source_ip: string
-        }
-        Insert: {
-          id?: string
-          interaction_count?: number
-          last_interaction?: string | null
-          log_type: string
-          source_ip: string
-        }
-        Update: {
-          id?: string
-          interaction_count?: number
-          last_interaction?: string | null
-          log_type?: string
-          source_ip?: string
-        }
-        Relationships: []
-      }
-      logs: {
-        Row: {
-          id: number
-          time: string
-        }
-        Insert: {
-          id?: number
-          time?: string
-        }
-        Update: {
-          id?: number
-          time?: string
-        }
-        Relationships: []
-      }
       menu_interactions: {
         Row: {
-          count: number
           id: number
           menu_type: string
           student_id: string
         }
         Insert: {
-          count?: number
           id?: number
           menu_type: string
           student_id: string
         }
         Update: {
-          count?: number
           id?: number
           menu_type?: string
           student_id?: string
