@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -124,7 +123,7 @@ export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterL
           timestamp: logData.timestamp || new Date().toISOString(),
         }
       ])
-      .select('*')
+      .select()
       .single();
 
     if (error) {
