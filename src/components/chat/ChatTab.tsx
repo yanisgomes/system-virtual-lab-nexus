@@ -10,6 +10,7 @@ interface ChatTabProps {
   student: {
     id: string;
     name: string;
+    ip_address?: string;
   };
 }
 
@@ -27,7 +28,34 @@ const ChatTab = ({ student }: ChatTabProps) => {
 
   // Send message mutation
   const { mutate, isPending: isSending } = useMutation({
-    mutationFn: sendTeacherMessage,
+    mutationFn: async ({ student_id, content }: { student_id: string; content: string }) => {
+      // Insert row first (for persistence & realtime)
+      const result = await sendTeacherMessage({ student_id, content });
+      
+      // If the student has an IP address, send UDP packet via Edge Function
+      if (student.ip_address) {
+        try {
+          console.log("Sending UDP via Edge Function to:", student.ip_address);
+          // Fire UDP packet via Supabase Edge Function
+          fetch("https://xdzoslgjemunetuztrfg.supabase.co/functions/v1/send_udp_chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              ip: student.ip_address, 
+              content,
+              sender: "Teacher" 
+            }),
+          }).catch(error => {
+            console.error("Failed to send UDP packet:", error);
+          });
+        } catch (error) {
+          console.error("Error sending UDP packet:", error);
+          // Don't block the mutation on UDP send failure
+        }
+      }
+      
+      return result;
+    },
     onMutate: async (newMessage) => {
       // Optimistic update
       const optimisticMessage: Message = {

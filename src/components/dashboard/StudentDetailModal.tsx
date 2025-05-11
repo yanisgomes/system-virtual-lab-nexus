@@ -117,7 +117,7 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
           </TabsContent>
 
           <TabsContent value="chat" className="p-1">
-            <ChatTab student={{ id: student.id, name: student.name }} />
+            <ChatTab student={{ id: student.id, name: student.name, ip_address: student.ip_address }} />
           </TabsContent>
         </Tabs>
       </DialogContent>
