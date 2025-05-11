@@ -55,7 +55,7 @@ export function RaisedHandProvider({ children }: { children: ReactNode }) {
       const content = payload.new.content;
       const buttonName = content?.buttonName;
       
-      if (buttonName && typeof buttonName === 'string' && buttonName.includes('Help')) {
+      if (typeof buttonName === 'string' && buttonName.toLowerCase().includes('help')) {
         console.log("Help button press detected:", buttonName);
         
         // Get the source IP
@@ -132,8 +132,8 @@ export function RaisedHandProvider({ children }: { children: ReactNode }) {
           event: 'INSERT',
           schema: 'public',
           table: 'router_logs',
-          // Accept both possible values for log_type
-          filter: 'log_type=in.(MenuButton,MenuButtonPress)'
+          // Accept all possible values for log_type
+          filter: 'log_type=in.(MenuButton,MenuButtonPress,MessageButton)'
         },
         handleLogInsert
       )

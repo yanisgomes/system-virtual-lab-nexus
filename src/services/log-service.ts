@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -114,7 +115,7 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
 
 export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterLog | null> => {
   try {
-    // Fix: Type the response properly using generic type parameter
+    // Fix: Use properly typed response with generic type parameter
     const { error, data } = await supabase
       .from('router_logs')
       .insert([
@@ -123,7 +124,7 @@ export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterL
           timestamp: logData.timestamp || new Date().toISOString(),
         }
       ])
-      .select()
+      .select('*')
       .single();
 
     if (error) {
@@ -131,7 +132,7 @@ export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterL
       return null;
     }
 
-    return data as RouterLog;
+    return data;
   } catch (error) {
     console.error('Error creating router log:', error);
     return null;
