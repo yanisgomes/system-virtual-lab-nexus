@@ -54,7 +54,7 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
             <p className="text-muted-foreground text-xs">{headset_id} ({ip_address})</p>
           </div>
           
-          {/* Activity Beacon */}
+          {/* Activity Beacon - the single visual indicator */}
           <ActivityBeacon
             lastInteractionTime={lastActivityTime}
             helpRequested={helpRequested}
