@@ -51,9 +51,9 @@ export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> 
  */
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
   try {
-    // Fix: Using the correct type for RPC function (empty object, not empty string)
+    // Fix: Correctly calling the RPC function with an empty object for the params
     const { data, error } = await supabase
-      .rpc('get_interaction_statistics');
+      .rpc('get_interaction_statistics', {});
     
     if (error) {
       console.error("Error fetching statistics:", error);

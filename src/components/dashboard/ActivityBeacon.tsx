@@ -51,10 +51,10 @@ const ActivityBeacon = ({
   useEffect(() => {
     if (!lastInteractionTime) return;
     
-    const lastTime = lastInteractionTime.getTime();
-    if (lastTime > lastPingTime) {
+    const shouldPing = lastInteractionTime.getTime() > lastPingTime;
+    if (shouldPing && status !== "idle") {
       setPing(true);
-      setLastPingTime(lastTime);
+      setLastPingTime(lastInteractionTime.getTime());
       
       const timer = setTimeout(() => {
         setPing(false);
@@ -62,7 +62,7 @@ const ActivityBeacon = ({
       
       return () => clearTimeout(timer);
     }
-  }, [lastInteractionTime, lastPingTime]);
+  }, [lastInteractionTime, lastPingTime, status]);
   
   const handleHelpClick = useCallback(() => {
     if (status === "help" && onHelpAcknowledged) {
@@ -100,34 +100,37 @@ const ActivityBeacon = ({
       aria-live="polite"
       aria-label={`Student is ${status}${ping ? ', new interaction detected' : ''}`}
     >
-      {/* Static beacon */}
+      {/* Static core dot */}
       <div 
         className={`w-3 h-3 rounded-full ${getStatusColor()} ${
           status === "help" ? "animate-pulse-light" : ""
         }`}
       />
       
-      {/* Ping animation */}
+      {/* Concentric ripple ping animation */}
       <AnimatePresence>
         {ping && !prefersReducedMotion && (
           <>
+            {/* First ripple ring (largest, slowest) */}
             <motion.div
               className={`absolute top-1/2 left-1/2 rounded-full ${getPingColor()}`}
               initial={{ width: 0, height: 0, x: "-50%", y: "-50%", opacity: 0.8 }}
               animate={{ 
-                width: 30, 
-                height: 30,
+                width: 32, 
+                height: 32,
                 x: "-50%", 
                 y: "-50%", 
                 opacity: 0 
               }}
               exit={{ opacity: 0 }}
               transition={{ 
-                duration: 1.5,
+                duration: 1.2,
                 ease: "easeOut"
               }}
               aria-hidden="true"
             />
+            
+            {/* Second ripple ring (medium, medium speed) - staggered keyframe */}
             <motion.div
               className={`absolute top-1/2 left-1/2 rounded-full ${getPingColor()}`}
               initial={{ width: 0, height: 0, x: "-50%", y: "-50%", opacity: 0.6 }}
@@ -143,6 +146,26 @@ const ActivityBeacon = ({
                 duration: 1,
                 ease: "easeOut",
                 delay: 0.1
+              }}
+              aria-hidden="true"
+            />
+            
+            {/* Third ripple ring (small, fastest) - staggered keyframe */}
+            <motion.div
+              className={`absolute top-1/2 left-1/2 rounded-full ${getPingColor()}`}
+              initial={{ width: 0, height: 0, x: "-50%", y: "-50%", opacity: 0.4 }}
+              animate={{ 
+                width: 12, 
+                height: 12,
+                x: "-50%", 
+                y: "-50%", 
+                opacity: 0 
+              }}
+              exit={{ opacity: 0 }}
+              transition={{ 
+                duration: 0.8,
+                ease: "easeOut",
+                delay: 0.2
               }}
               aria-hidden="true"
             />
