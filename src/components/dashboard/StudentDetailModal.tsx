@@ -103,9 +103,8 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
         </div>
 
         <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid grid-cols-4 mb-4">
+          <TabsList className="grid grid-cols-3 mb-4">
             <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="focus">Focus Areas</TabsTrigger>
             <TabsTrigger value="interactions">Interactions</TabsTrigger>
             <TabsTrigger value="metrics">Metrics</TabsTrigger>
           </TabsList>
@@ -134,31 +133,6 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                       />
                     </LineChart>
                   </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="focus" className="p-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Focus Areas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {metrics.focusAreas.map((area) => (
-                    <div key={area.area} className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-sm">{area.area}</span>
-                        <span className="text-sm font-medium">{area.percentage}%</span>
-                      </div>
-                      <Progress 
-                        value={area.percentage} 
-                        className="h-2"
-                        indicatorClassName={getProgressColor(area.percentage)}
-                      />
-                    </div>
-                  ))}
                 </div>
               </CardContent>
             </Card>

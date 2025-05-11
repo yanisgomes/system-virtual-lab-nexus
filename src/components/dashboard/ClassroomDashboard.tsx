@@ -92,7 +92,7 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
     });
   };
 
-  // Aggregate focus areas across all students
+  // Keeping the function to avoid breaking code that might use it elsewhere
   const generateAggregatedFocusAreas = () => {
     const focusAreaMap: Record<string, number[]> = {};
     
@@ -115,7 +115,9 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
   };
 
   const chartData = generateChartData();
-  const focusAreas = generateAggregatedFocusAreas();
+  
+  // Still calculating focus areas to avoid breaking any code that might reference it
+  generateAggregatedFocusAreas();
 
   return (
     <RaisedHandProvider>
@@ -153,8 +155,9 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <Card className="lg:col-span-2">
+        {/* Removed the grid with the focus areas card, keeping only the chart card */}
+        <div className="mb-8">
+          <Card>
             <CardHeader>
               <CardTitle>Classroom Engagement Levels</CardTitle>
             </CardHeader>
@@ -178,45 +181,6 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
                   </LineChart>
                 </ResponsiveContainer>
               </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Focus Areas</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="space-y-2">
-                    <div className="flex justify-between">
-                      <div className="h-4 bg-muted rounded w-24 animate-pulse"></div>
-                      <div className="h-4 bg-muted rounded w-12 animate-pulse"></div>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full animate-pulse"></div>
-                  </div>
-                ))
-              ) : (
-                focusAreas.map((focusArea, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>{focusArea.area}</span>
-                      <span className="font-medium">{focusArea.percentage}%</span>
-                    </div>
-                    <div className="h-2 bg-vr-light-gray rounded-full overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${
-                          index === 0 ? "bg-vr-purple" :
-                          index === 1 ? "bg-vr-dark-purple" :
-                          index === 2 ? "bg-vr-blue" :
-                          "bg-yellow-500"
-                        }`}
-                        style={{ width: `${focusArea.percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
             </CardContent>
           </Card>
         </div>

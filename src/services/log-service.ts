@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -100,5 +99,30 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
     console.error("Error in fetchInteractionStatistics:", err);
     // Return empty array instead of throwing to prevent UI crashes
     return [];
+  }
+};
+
+export const createRouterLogs = async (logData: RouterLogInput): Promise<RouterLog | null> => {
+  try {
+    const { error, data } = await supabase
+      .from('router_logs')
+      .insert([
+        {
+          ...logData,
+          timestamp: logData.timestamp || new Date().toISOString(),
+        }
+      ])
+      .select('*')
+      .single();
+
+    if (error) {
+      console.error('Error creating router log:', error);
+      return null;
+    }
+
+    return data as RouterLog;
+  } catch (error) {
+    console.error('Error creating router log:', error);
+    return null;
   }
 };
