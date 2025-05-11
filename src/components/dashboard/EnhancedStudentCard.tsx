@@ -51,11 +51,12 @@ const EnhancedStudentCard = ({ student, onClick }: EnhancedStudentCardProps) => 
   };
   
   return (
-    <div className="relative">
+    <div className="relative h-full">
       {/* Animated card wrapper */}
       <motion.div
         variants={cardVariants}
         animate={isHandRaised ? ["raised", "wiggle"] : "initial"}
+        className="h-full"
       >
         <StudentCard student={student} onClick={onClick} />
       </motion.div>

@@ -14,7 +14,7 @@ interface StudentCardProps {
 }
 
 const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
-  const { name, headset_id, ip_address, avatar, metrics } = student;
+  const { name, headset_id, ip_address, avatar } = student;
   
   const {
     status,
@@ -39,10 +39,10 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
 
   return (
     <Card 
-      className="cursor-pointer hover:border-vr-purple transition-colors" 
+      className="cursor-pointer hover:border-vr-purple transition-colors h-full" 
       onClick={handleClick}
     >
-      <CardContent className="p-4 flex flex-col gap-3 relative pb-5">
+      <CardContent className="p-4 flex flex-col gap-3 min-h-[196px] relative pb-5">
         {/* Header row with avatar and student info */}
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
@@ -68,19 +68,8 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
           className="self-center mx-auto"
         />
         
-        {/* Task Completion Stats - optional, can be hidden on small screens */}
-        <div className="text-xs text-muted-foreground text-center sm:block">
-          Tasks Completed: {metrics.completed_tasks} ({metrics.task_success_rate}% success)
-        </div>
-        
         {/* Spacer to push progress bar to bottom */}
         <div className="flex-grow" />
-        
-        {/* Inactivity Notice */}
-        {lastActivityTime && 
-         (new Date().getTime() - lastActivityTime.getTime()) / 1000 > 10 && (
-          <p className="text-xs text-gray-400 text-center">Inactive since: {inactiveTime}</p>
-        )}
         
         {/* Task Progress Bar at bottom */}
         <div className="mt-auto">
