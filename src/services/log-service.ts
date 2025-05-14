@@ -8,7 +8,7 @@ export interface RouterLog {
   content: any; // Use a more specific type when possible
 }
 
-interface InteractionStatisticsResponse {
+export interface InteractionStatisticsResponse {
   menu_interactions: number;
   block_grabs: number;
 }
@@ -85,7 +85,7 @@ export const getRecentActivityByIP = async (ip: string, limit = 10) => {
 export const getInteractionStatistics = async (ip: string): Promise<InteractionStatisticsResponse> => {
   try {
     const { data, error } = await supabase
-      .rpc('get_interaction_statistics', { ip_address: ip }) as { data: InteractionStatisticsResponse, error: any };
+      .rpc('get_interaction_statistics', { ip_address: ip });
 
     if (error) {
       console.error('Error getting interaction statistics:', error);
@@ -97,6 +97,58 @@ export const getInteractionStatistics = async (ip: string): Promise<InteractionS
   } catch (err) {
     console.error('Error in getInteractionStatistics:', err);
     return { menu_interactions: 0, block_grabs: 0 };
+  }
+};
+
+// Define InteractionStatistic for the Logs page
+export interface InteractionStatistic {
+  id?: string;
+  log_type?: string;
+  interaction_type?: string;
+  source_ip?: string;
+  student_id?: string;
+  interaction_count?: number;
+  count?: number;
+  last_interaction?: string;
+}
+
+// Functions for Logs page
+export const fetchLatestLogs = async (limit = 20) => {
+  try {
+    const { data, error } = await supabase
+      .from('router_logs')
+      .select('*')
+      .order('time_seconds', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error('Error fetching latest logs:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Error in fetchLatestLogs:', err);
+    throw err;
+  }
+};
+
+export const fetchInteractionStatistics = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('interaction_statistics')
+      .select('*')
+      .order('interaction_count', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching interaction statistics:', error);
+      throw error;
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Error in fetchInteractionStatistics:', err);
+    throw err;
   }
 };
 

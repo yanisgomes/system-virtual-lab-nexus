@@ -4,11 +4,12 @@ import { formatRelative } from "date-fns";
 interface ChatMessageBubbleProps {
   content: string;
   timestamp: string;
-  sender: "teacher" | "student";
+  sender: "teacher" | "student" | "system";
 }
 
 const ChatMessageBubble = ({ content, timestamp, sender }: ChatMessageBubbleProps) => {
   const isTeacher = sender === "teacher";
+  const isSystem = sender === "system";
   const date = new Date(timestamp);
   const formattedTime = formatRelative(date, new Date());
   
@@ -18,7 +19,9 @@ const ChatMessageBubble = ({ content, timestamp, sender }: ChatMessageBubbleProp
         className={`${
           isTeacher 
             ? 'bg-primary/90 text-white self-end' 
-            : 'bg-muted text-foreground self-start'
+            : isSystem
+              ? 'bg-slate-200 text-slate-800 self-start italic'
+              : 'bg-muted text-foreground self-start'
         } rounded-2xl px-3 py-2 max-w-[75%]`}
       >
         {content}

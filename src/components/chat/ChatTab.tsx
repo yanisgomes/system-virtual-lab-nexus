@@ -69,7 +69,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
 
   // Add exercise loaded message mutation
   const { mutate: addExerciseLoaded } = useMutation({
-    mutationFn: addNewExerciseLoadedMessage,
+    mutationFn: (exerciseData: SystemExerciseData) => addNewExerciseLoadedMessage(student.id, exerciseData),
     onSuccess: (data) => {
       if (data) {
         queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
@@ -86,7 +86,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
   
   // Add exercise finished message mutation
   const { mutate: addExerciseFinished } = useMutation({
-    mutationFn: addSystemFinishedMessage,
+    mutationFn: (finishedData: SystemFinishedData) => addSystemFinishedMessage(student.id, finishedData),
     onSuccess: (data) => {
       if (data) {
         queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
@@ -124,7 +124,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
             log.content as SystemExerciseData;
             
           // Add the message to the student's chat and persist it to the database
-          addExerciseLoaded(student.id, exerciseData);
+          addExerciseLoaded(exerciseData);
         } catch (error) {
           console.error("Error processing NewExerciseLoaded event:", error);
         }
@@ -139,7 +139,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
             log.content as SystemFinishedData;
             
           // Add the message to the student's chat and persist it to the database
-          addExerciseFinished(student.id, finishedData);
+          addExerciseFinished(finishedData);
         } catch (error) {
           console.error("Error processing SystemFinished event:", error);
         }
@@ -274,7 +274,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
           key={message.id}
           content={message.content}
           timestamp={message.created_at}
-          sender={message.sender}
+          sender={message.sender as "teacher" | "student"}
         />
       );
     }
