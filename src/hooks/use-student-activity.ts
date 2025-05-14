@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { RouterLog } from '@/services/log-service';
@@ -69,7 +70,7 @@ export function useStudentActivity(sourceIp: string): StudentActivityResult {
           filter: `source_ip=eq.${sourceIp}`
         },
         (payload) => {
-          const log = payload.new as RouterLog;
+          const log = payload.new as unknown as RouterLog;
           const now = new Date();
           
           // Add to events list

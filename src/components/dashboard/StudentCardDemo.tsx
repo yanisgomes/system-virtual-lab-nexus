@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import StudentCard from './StudentCard';
 import { Student } from '@/services/dashboard-data';
-import { createRouterLogs } from '@/services/log-service';
+import { createRouterLog } from '@/services/log-service';
 
 // Mock student data
 const mockStudent: Student = {
@@ -61,7 +61,7 @@ const StudentCardDemo = () => {
   
   const triggerTestEvent = async (logType: string) => {
     // Create a test router log for this student
-    await createRouterLogs(generateTestLog(student.ip_address, logType));
+    await createRouterLog(generateTestLog(student.ip_address, logType));
   };
   
   const handleCardClick = useCallback(() => {
