@@ -1,16 +1,18 @@
+
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Student } from "@/services/dashboard-data";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import ActivityTabContent from "./ActivityTabContent";
-import InteractionsTabContent from "./InteractionsTabContent";
+import { Card, CardContent } from "@/components/ui/card";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import ChatTab from "../chat/ChatTab";
-
-interface MenuTypeData {
-  name: string;
-  value: number;
-}
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 interface StudentDetailModalProps {
   student: Student | null;
@@ -18,119 +20,173 @@ interface StudentDetailModalProps {
   onClose: () => void;
 }
 
-// Helper to format menu button names for consistent color mapping
-const formatMenuName = (name: string): string => {
-  // Strip "Btn" suffix and capitalize first letter
-  const cleanName = name.replace('Btn', '');
-  return cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
-};
+// Form validation schema
+const studentFormSchema = z.object({
+  firstName: z.string().min(1, "Le prénom est requis"),
+  lastName: z.string().min(1, "Le nom est requis"),
+  headsetName: z.string().min(1, "Le nom du casque est requis"),
+  ipAddress: z.string().min(1, "L'adresse IP est requise"),
+});
+
+type StudentFormValues = z.infer<typeof studentFormSchema>;
 
 const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps) => {
+  const { toast } = useToast();
+  
   if (!student) return null;
 
-  const { name, headset_id, ip_address, metrics, avatar } = student;
+  const { id, name, avatar, metrics } = student;
+  const fullName = name.split(" ");
+  const firstName = fullName[0] || "";
+  const lastName = fullName.slice(1).join(" ") || "";
+
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      firstName,
+      lastName,
+      headsetName: student.headset_id,
+      ipAddress: student.ip_address,
+    }
+  });
+
+  // Update form values when student changes
+  useEffect(() => {
+    if (student) {
+      const fullName = student.name.split(" ");
+      const firstName = fullName[0] || "";
+      const lastName = fullName.slice(1).join(" ") || "";
+      
+      form.reset({
+        firstName,
+        lastName,
+        headsetName: student.headset_id,
+        ipAddress: student.ip_address,
+      });
+    }
+  }, [student, form]);
+
+  // Handle form submission
+  const onSubmit = (data: StudentFormValues) => {
+    // In a real application, this would save the data to the database
+    console.log("Student data updated:", data);
+    toast({
+      title: "Informations mises à jour",
+      description: "Les informations de l'étudiant ont été mises à jour avec succès.",
+    });
+  };
+
   const initials = name.split(" ").map((n) => n[0]).join("");
-
-  // Format timestamp for the chart
-  const activityData = metrics.activityHistory.map((item) => ({
-    time: new Date(item.timestamp || item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    value: item.value
-  }));
-
-  // Prepare interaction data for charts
-  const handPreferenceData = [
-    { name: 'Left Hand', value: metrics.handPreference.leftHandUsage },
-    { name: 'Right Hand', value: metrics.handPreference.rightHandUsage }
-  ].filter(item => item.value > 0);
-
-  // Prepare menu interaction data with formatted names for consistent color mapping
-  const menuTypeData: MenuTypeData[] = Object.entries(metrics.interactionCounts.menuTypes || {}).map(([key, value]) => ({
-    name: formatMenuName(key),
-    value: value as number
-  }));
-
-  // Prepare block interaction data
-  const blockInteractionData = [
-    { name: 'Grabs', value: metrics.interactionCounts.blockGrabs },
-    { name: 'Releases', value: metrics.interactionCounts.blockReleases || 0 }
-  ];
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center gap-4 pb-2">
-          <Avatar className="h-12 w-12">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto font-serif">
+        <DialogHeader className="flex flex-row items-center gap-4 pb-2 border-b">
+          <Avatar className="h-16 w-16">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <DialogTitle className="text-xl">{name}</DialogTitle>
-            <DialogDescription>
-              Headset: {headset_id} | IP: {ip_address}
+            <DialogTitle className="text-2xl font-serif">{name}</DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground">
+              Casque: {student.headset_id} | IP: {student.ip_address}
             </DialogDescription>
           </div>
         </DialogHeader>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Attention</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.attention}%</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Engagement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metrics.engagement}%</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-muted-foreground">Interactions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions}
+        <div className="py-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-serif">Prénom</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="font-serif" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-serif">Nom de famille</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="font-serif" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="headsetName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-serif">Nom du casque</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="font-serif" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="ipAddress"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="font-serif">Adresse IP</FormLabel>
+                      <FormControl>
+                        <Input {...field} className="font-serif" />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {metrics.interactionCounts.blockGrabs > 0 && `${metrics.interactionCounts.blockGrabs} blocks, `}
-                {metrics.interactionCounts.menuInteractions > 0 && `${metrics.interactionCounts.menuInteractions} menu actions`}
-                {metrics.interactionCounts.blockGrabs === 0 && metrics.interactionCounts.menuInteractions === 0 && 
-                  `${metrics.completed_tasks} tasks completed`}
-              </p>
-            </CardContent>
-          </Card>
+
+              <Button type="submit" className="bg-[#7E69AB] hover:bg-[#655687] text-white font-serif">
+                Mettre à jour les informations
+              </Button>
+            </form>
+          </Form>
         </div>
 
-        <Tabs defaultValue="activity" className="w-full">
-          <TabsList className="grid grid-cols-3 mb-4">
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="interactions">Interactions</TabsTrigger>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="activity" className="p-1">
-            <ActivityTabContent activityData={activityData} />
-          </TabsContent>
-          
-          <TabsContent value="interactions" className="p-1">
-            <InteractionsTabContent 
-              handPreferenceData={handPreferenceData}
-              menuTypeData={menuTypeData}
-              blockInteractionData={blockInteractionData}
-              totalMenuInteractions={metrics.interactionCounts.menuInteractions}
-              totalHandActions={metrics.handPreference.totalHandActions}
-            />
-          </TabsContent>
+        <div className="mt-6 border-t pt-6">
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Card>
+              <CardContent className="pt-6">
+                <Label className="text-sm text-muted-foreground font-serif">Attention</Label>
+                <div className="text-2xl font-bold font-serif mt-2">{metrics.attention}%</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <Label className="text-sm text-muted-foreground font-serif">Engagement</Label>
+                <div className="text-2xl font-bold font-serif mt-2">{metrics.engagement}%</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <Label className="text-sm text-muted-foreground font-serif">Interactions</Label>
+                <div className="text-2xl font-bold font-serif mt-2">
+                  {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
-          <TabsContent value="chat" className="p-1">
-            <ChatTab student={{ id: student.id, name: student.name }} />
-          </TabsContent>
-        </Tabs>
+        <div className="mt-6 border-t pt-6">
+          <h3 className="text-xl font-serif mb-4">Conversation</h3>
+          <ChatTab student={{ id: student.id, name: student.name }} />
+        </div>
       </DialogContent>
     </Dialog>
   );

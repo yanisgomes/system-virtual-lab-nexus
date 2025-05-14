@@ -41,8 +41,8 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
         console.error("Failed to load classroom data", error);
         toast({
           variant: "destructive",
-          title: "Error loading classroom data",
-          description: "Please check your connection and try again."
+          title: "Erreur de chargement",
+          description: "Veuillez vérifier votre connexion et réessayer."
         });
       } finally {
         setIsLoading(false);
@@ -97,17 +97,17 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
 
   return (
     <RaisedHandProvider>
-      <div className="flex-1 p-6 overflow-auto">
+      <div className="flex-1 p-6 overflow-auto bg-[#F8F9FA] font-serif">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold mb-1">Classroom Dashboard</h1>
-          <p className="text-muted-foreground">
-            Monitor real-time VR activity and student engagement
+          <h1 className="text-2xl font-serif font-bold mb-1">SysVL Nexus - Tableau de bord</h1>
+          <p className="text-muted-foreground font-serif">
+            Surveillez en temps réel l'activité du laboratoire virtuel et l'engagement des étudiants
           </p>
         </div>
 
         {/* Student Metrics grid - moved to the top */}
         <div className="mb-8">
-          <h2 className="text-xl font-bold mb-4">Student Metrics</h2>
+          <h2 className="text-xl font-serif font-bold mb-4">Métriques des étudiants</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {isLoading ? (
               Array.from({ length: 8 }).map((_, index) => (
@@ -142,23 +142,23 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
 
         {/* Classroom Engagement Levels chart - moved below student grid */}
         <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Classroom Engagement Levels</CardTitle>
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader className="border-b">
+              <CardTitle className="font-serif">Niveaux d'engagement en classe</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-6">
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="time" />
-                    <YAxis domain={[0, 100]} />
-                    <Tooltip />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5DEFF" />
+                    <XAxis dataKey="time" stroke="#7E69AB" />
+                    <YAxis domain={[0, 100]} stroke="#7E69AB" />
+                    <Tooltip contentStyle={{ fontFamily: "serif" }} />
                     <Line
                       type="monotone"
                       dataKey="value"
-                      name="Attention Level"
-                      stroke="#9b87f5"
+                      name="Niveau d'attention"
+                      stroke="#7E69AB"
                       strokeWidth={2}
                       dot={{ r: 4 }}
                       activeDot={{ r: 6, fill: "#7E69AB" }}

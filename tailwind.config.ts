@@ -64,15 +64,27 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
                 vr: {
-                    purple: '#9b87f5',
+                    purple: '#7E69AB', // Changed to match academic theme
                     'light-purple': '#E5DEFF',
-                    'dark-purple': '#7E69AB',
+                    'dark-purple': '#655687', // Darker version
                     blue: '#0EA5E9',
                     'sky-blue': '#33C3F0',
                     'dark-gray': '#1A1F2C',
                     gray: '#8E9196',
-                    'light-gray': '#F1F0FB',
+                    'light-gray': '#F8F9FA', // Lighter background for academic feel
+                },
+                academic: {
+                    primary: '#7E69AB',
+                    secondary: '#E5DEFF',
+                    accent: '#655687',
+                    background: '#F8F9FA',
+                    text: '#1A1F2C',
+                    muted: '#8E9196',
                 }
+			},
+			fontFamily: {
+				'serif': ['Playfair Display', 'Georgia', 'serif'],
+				'sans': ['Inter', 'system-ui', 'sans-serif'],
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

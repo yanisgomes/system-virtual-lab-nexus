@@ -27,8 +27,8 @@ const Index = () => {
         console.error("Failed to load classrooms:", error);
         toast({
           variant: "destructive",
-          title: "Error loading classrooms",
-          description: "Please check your connection and try again."
+          title: "Erreur de chargement",
+          description: "Veuillez vérifier votre connexion et réessayer."
         });
       } finally {
         setIsLoading(false);
@@ -44,10 +44,10 @@ const Index = () => {
 
   if (isLoading && classrooms.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center font-serif bg-[#F8F9FA]">
         <div className="text-center">
-          <div className="h-10 w-10 border-4 border-t-vr-purple rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading classrooms...</p>
+          <div className="h-10 w-10 border-4 border-t-[#7E69AB] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground font-serif">Chargement des classes...</p>
         </div>
       </div>
     );
@@ -55,8 +55,8 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-[#f5f7fa]">
-        <div className="bg-vr-dark-gray">
+      <div className="flex min-h-screen w-full bg-[#F8F9FA] font-serif">
+        <div className="bg-[#1A1F2C]">
           <ClassroomSidebar
             classrooms={classrooms}
             selectedClassroom={selectedClassroom}

@@ -1,123 +1,76 @@
-import { Json } from "@/integrations/supabase/types";
 import { supabase } from "@/integrations/supabase/client";
 
-// Type definitions
 export interface RouterLog {
   id: string;
-  source_ip: string;
+  created_at: string;
+  student_id: string;
   log_type: string;
-  content: Json;
-  timestamp: string;
-  time_seconds: number;
+  message: string;
+  metadata: any;
 }
 
-export interface InteractionStatistic {
-  id: string;
-  source_ip: string;
-  log_type: string;
-  interaction_count: number;
-  last_interaction: string | null;
-}
-
-/**
- * Fetches the latest router logs from the database
- * @param limit The maximum number of logs to fetch
- * @returns Promise with array of RouterLog objects
- */
-export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> => {
+export const fetchRouterLogs = async (
+  limit: number = 20,
+  offset: number = 0,
+  sortByLatest: boolean = true,
+): Promise<RouterLog[]> => {
   try {
     const { data, error } = await supabase
-      .from('router_logs')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .limit(limit);
+      .from("router_logs")
+      .select("*")
+      .order("created_at", { ascending: !sortByLatest })
+      .range(offset, offset + limit - 1);
     
-    if (error) {
-      console.error("Error fetching logs:", error);
-      throw new Error(`Failed to fetch logs: ${error.message}`);
-    }
-    
-    return data as RouterLog[];
-  } catch (error) {
-    console.error("Exception while fetching logs:", error);
-    throw error;
-  }
-};
-
-/**
- * Fetches interaction statistics from the database
- * @returns Promise<InteractionStatistic[]>
- */
-export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
-  try {
-    const { data, error } = await supabase
-      .rpc('get_interaction_statistics', {});
-    
-    if (error) {
-      console.error("Error fetching statistics:", error);
-      return [];
-    }
-    
+    if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error("Error in fetchInteractionStatistics:", error);
+    console.error("Error fetching router logs:", error);
     return [];
   }
 };
 
-/**
- * Creates a new router log entry in the database
- * @param log The log object to create
- * @returns Promise with the created log
- */
-export const createRouterLogs = async (routerLog: RouterLogInput): Promise<void> => {
+export const fetchLogsByStudentId = async (
+  studentId: string,
+  limit: number = 10
+): Promise<RouterLog[]> => {
   try {
-    // Insert log
-    await supabase.from('router_logs').insert([
-      {
-        source_ip: routerLog.source_ip,
-        log_type: routerLog.log_type,
-        content: routerLog.content,
-        time_seconds: routerLog.time_seconds || 0
-      }
-    ]);
+    const { data, error } = await supabase
+      .from("router_logs")
+      .select("*")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
     
-    // Call RPC function to increment interaction stats
-    await supabase.rpc('increment_interaction_stat', {
-      source_ip_param: routerLog.source_ip,
-      log_type_param: routerLog.log_type,
-      content_param: routerLog.content
-    });
-    
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error('Error creating router log:', error);
-    throw error;
+    console.error("Error fetching logs by student ID:", error);
+    return [];
   }
 };
 
-/**
- * Fetches logs for a specific student based on their IP address
- * @param sourceIp The IP address to filter logs by
- * @param limit The maximum number of logs to fetch
- * @returns Promise with array of RouterLog objects
- */
-export const fetchLogsBySourceIp = async (sourceIp: string, limit: number = 30): Promise<RouterLog[]> => {
+export const createRouterLog = async (logData: any): Promise<RouterLog | null> => {
   try {
-    const { data, error } = await supabase
-      .from('router_logs')
-      .select('*')
-      .eq('source_ip', sourceIp)
-      .order('timestamp', { ascending: false })
-      .limit(limit);
+    // Call the create_router_log RPC function with the log data
+    const { data, error } = await supabase.rpc("create_router_log", {});
     
-    if (error) {
-      console.error(`Error fetching logs for IP ${sourceIp}:`, error);
-      throw new Error(`Failed to fetch logs: ${error.message}`);
-    }
-    
-    return data as RouterLog[];
+    if (error) throw error;
+    return data;
   } catch (error) {
-    console.error("Exception while fetching logs by IP:", error);
-    throw error;
+    console.error("Error creating router log:", error);
+    return null;
+  }
+};
+
+export const generateRandomLog = async (): Promise<RouterLog | null> => {
+  try {
+    // Call the generate_random_log RPC function
+    const { data, error } = await supabase.rpc("generate_random_log", {});
+    
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error generating random log:", error);
+    return null;
   }
 };

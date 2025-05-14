@@ -1,20 +1,21 @@
 
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 220 33% 98%; /* Light academic background */
+    --foreground: 222 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222 15% 15%;
 
-    --primary: 258 78% 75%;
+    --primary: 258 40% 54%; /* Academic purple */
     --primary-foreground: 210 40% 98%;
 
     --secondary: 258 40% 96.1%;
@@ -31,13 +32,13 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 258 78% 75%;
+    --ring: 258 40% 54%; /* Academic purple */
 
     --radius: 0.5rem;
 
     --sidebar-background: 222 29% 14%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 258 78% 75%;
+    --sidebar-primary: 258 40% 54%; /* Academic purple */
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 211 61% 48%;
     --sidebar-accent-foreground: 0 0% 100%;
@@ -55,7 +56,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 258 78% 75%;
+    --primary: 258 40% 54%; /* Academic purple */
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -76,7 +77,7 @@
     
     --sidebar-background: 222 29% 14%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 258 78% 75%;
+    --sidebar-primary: 258 40% 54%; /* Academic purple */
     --sidebar-primary-foreground: 0 0% 98%;
     --sidebar-accent: 258 40% 96.1%;
     --sidebar-accent-foreground: 0 0% 100%;
@@ -92,6 +93,25 @@
 
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
   }
 }
 
+/* Academic styling utilities */
+@layer components {
+  .academic-card {
+    @apply bg-white border border-gray-200 shadow-sm rounded-md;
+  }
+  
+  .academic-heading {
+    @apply font-serif text-gray-900 font-semibold;
+  }
+  
+  .academic-text {
+    @apply text-gray-700 leading-relaxed;
+  }
+}
