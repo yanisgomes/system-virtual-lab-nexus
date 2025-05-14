@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { Json } from "@/integrations/supabase/types";
 
@@ -138,7 +137,7 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
       id: index + 1,
       log_type: item.log_type,
       source_ip: item.source_ip,
-      count: parseInt(item.count),
+      count: Number(item.count), // Convert string to number
       last_interaction: item.last_interaction || new Date().toISOString()
     })) : [];
 
