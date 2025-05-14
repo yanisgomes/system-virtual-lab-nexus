@@ -118,7 +118,7 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
   try {
     // Using raw SQL query instead of the unsupported .group() method
     const { data, error } = await supabase
-      .rpc('get_interaction_statistics');
+      .rpc('get_interaction_statistics') as { data: Array<{ log_type: string, source_ip: string, count: string, last_interaction?: string }> | null, error: any };
 
     if (error) {
       console.error("Error fetching interaction statistics:", error);
@@ -126,7 +126,7 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
     }
 
     // Format the results as needed
-    const formattedData = data ? data.map((item: any, index: number) => ({
+    const formattedData = data ? data.map((item, index) => ({
       id: index + 1,
       log_type: item.log_type,
       source_ip: item.source_ip,
