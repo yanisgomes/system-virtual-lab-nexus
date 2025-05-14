@@ -33,22 +33,26 @@ type StudentFormValues = z.infer<typeof studentFormSchema>;
 const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps) => {
   const { toast } = useToast();
   
-  if (!student) return null;
+  // Initialize form with default empty values - this ensures hooks are always called in the same order
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      headsetName: "",
+      ipAddress: "",
+    }
+  });
+  
+  // Early return AFTER initializing all hooks
+  if (!student) {
+    return null;
+  }
 
   const { id, name, avatar, metrics } = student;
   const fullName = name.split(" ");
   const firstName = fullName[0] || "";
   const lastName = fullName.slice(1).join(" ") || "";
-
-  const form = useForm<StudentFormValues>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      firstName,
-      lastName,
-      headsetName: student.headset_id,
-      ipAddress: student.ip_address,
-    }
-  });
 
   // Update form values when student changes
   useEffect(() => {
