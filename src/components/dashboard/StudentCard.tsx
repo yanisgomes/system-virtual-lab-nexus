@@ -2,14 +2,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Student } from "@/services/dashboard-data";
-import { MouseEventHandler, memo, useEffect, useState } from "react";
+import { MouseEventHandler, memo } from "react";
 import ActivityBeacon from "./ActivityBeacon";
-import LastExerciseBadge, { LastExerciseEvent } from "./LastExerciseBadge";
+import StatusBadge from "./StatusBadge";
 import TaskProgressBar from "./TaskProgressBar";
 import { useStudentActivity } from "@/hooks/use-student-activity";
-import { Message } from "@/services/message-service";
-import { useQuery } from "@tanstack/react-query";
-import { fetchMessages } from "@/services/message-service";
 
 interface StudentCardProps {
   student: Student;
@@ -18,7 +15,6 @@ interface StudentCardProps {
 
 const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
   const { name, headset_id, ip_address, avatar } = student;
-  const [lastExerciseEvent, setLastExerciseEvent] = useState<LastExerciseEvent | null>(null);
   
   const {
     status,
@@ -28,32 +24,6 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
     helpRequested,
     acknowledgeHelp
   } = useStudentActivity(ip_address);
-
-  // Fetch the student's messages to find the latest exercise event
-  const { data: messages = [] } = useQuery({
-    queryKey: ["messages", student.id],
-    queryFn: () => fetchMessages(student.id),
-    refetchOnWindowFocus: false,
-  });
-  
-  // Extract the last exercise event from messages
-  useEffect(() => {
-    if (messages && messages.length > 0) {
-      // Find the most recent exercise-related message
-      const exerciseMessages = messages.filter(
-        (msg) => msg.type === "exercise_loaded" || msg.type === "exercise_finished"
-      );
-      
-      if (exerciseMessages.length > 0) {
-        const latestMessage = exerciseMessages[0]; // Messages are already sorted by created_at in descending order
-        
-        setLastExerciseEvent({
-          type: latestMessage.type as "exercise_loaded" | "exercise_finished",
-          data: latestMessage.metadata
-        });
-      }
-    }
-  }, [messages]);
 
   const initials = name
     .split(" ")
@@ -92,9 +62,9 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
           />
         </div>
 
-        {/* Last Exercise Badge - replaced status badge */}
-        <LastExerciseBadge 
-          event={lastExerciseEvent}
+        {/* Status Badge - centered below avatar row */}
+        <StatusBadge 
+          status={status} 
           className="self-center mx-auto"
         />
         

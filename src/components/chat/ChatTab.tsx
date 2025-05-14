@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMessages, sendTeacherMessage, Message, SystemExerciseData, SystemFinishedData, addNewExerciseLoadedMessage, addSystemFinishedMessage } from "@/services/message-service";
+import { fetchMessages, sendTeacherMessage, Message, SystemExerciseData, SystemFinishedData } from "@/services/message-service";
 import ChatMessageBubble from "./ChatMessageBubble";
 import ChatInput from "./ChatInput";
 import ExerciseMessageCard from "./ExerciseMessageCard";
@@ -67,40 +67,6 @@ const ChatTab = ({ student }: ChatTabProps) => {
     },
   });
 
-  // Add exercise loaded message mutation
-  const { mutate: addExerciseLoaded } = useMutation({
-    mutationFn: (exerciseData: SystemExerciseData) => addNewExerciseLoadedMessage(student.id, exerciseData),
-    onSuccess: (data) => {
-      if (data) {
-        queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
-          return [data, ...old];
-        });
-        
-        toast({
-          title: "Nouvel exercice chargé",
-          description: `${(data.metadata as SystemExerciseData).systemName} a été chargé`,
-        });
-      }
-    }
-  });
-  
-  // Add exercise finished message mutation
-  const { mutate: addExerciseFinished } = useMutation({
-    mutationFn: (finishedData: SystemFinishedData) => addSystemFinishedMessage(student.id, finishedData),
-    onSuccess: (data) => {
-      if (data) {
-        queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
-          return [data, ...old];
-        });
-        
-        toast({
-          title: "Exercice terminé",
-          description: `${(data.metadata as SystemFinishedData).systemName} a été terminé`,
-        });
-      }
-    }
-  });
-
   // Handle sending a message
   const handleSendMessage = (content: string) => {
     mutate({ student_id: student.id, content });
@@ -123,8 +89,26 @@ const ChatTab = ({ student }: ChatTabProps) => {
             JSON.parse(log.content) as SystemExerciseData : 
             log.content as SystemExerciseData;
             
-          // Add the message to the student's chat and persist it to the database
-          addExerciseLoaded(exerciseData);
+          // Add the message to the student's chat
+          // In a real implementation, you would call the addNewExerciseLoadedMessage function
+          // Here we're just simulating the arrival in the UI
+          queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
+            const newMessage: Message = {
+              id: `exercise-${Date.now()}`,
+              student_id: student.id,
+              sender: "system",
+              content: `Exercice chargé: ${exerciseData.systemName}`,
+              created_at: new Date().toISOString(),
+              type: "exercise_loaded",
+              metadata: exerciseData
+            };
+            return [newMessage, ...old];
+          });
+          
+          toast({
+            title: "Nouvel exercice chargé",
+            description: `${exerciseData.systemName} a été chargé`,
+          });
         } catch (error) {
           console.error("Error processing NewExerciseLoaded event:", error);
         }
@@ -138,8 +122,25 @@ const ChatTab = ({ student }: ChatTabProps) => {
             JSON.parse(log.content) as SystemFinishedData : 
             log.content as SystemFinishedData;
             
-          // Add the message to the student's chat and persist it to the database
-          addExerciseFinished(finishedData);
+          // Add the message to the student's chat
+          // In a real implementation, you would call the addSystemFinishedMessage function
+          queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
+            const newMessage: Message = {
+              id: `finished-${Date.now()}`,
+              student_id: student.id,
+              sender: "system",
+              content: `Exercice terminé: ${finishedData.systemName}`,
+              created_at: new Date().toISOString(),
+              type: "exercise_finished",
+              metadata: finishedData
+            };
+            return [newMessage, ...old];
+          });
+          
+          toast({
+            title: "Exercice terminé",
+            description: `${finishedData.systemName} a été terminé`,
+          });
         } catch (error) {
           console.error("Error processing SystemFinished event:", error);
         }
@@ -186,7 +187,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
       supabase.removeChannel(channel);
       supabase.removeChannel(messagesChannel);
     };
-  }, [student.id, queryClient, addExerciseLoaded, addExerciseFinished]);
+  }, [student.id, queryClient]);
 
   // Simulate system events for testing purposes
   const simulateSystemEvent = async (type: "exercise_loaded" | "exercise_finished") => {
@@ -226,7 +227,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
     await createRouterLog(log);
   };
 
-  // For development testing only - uncomment to test
+  // For development testing only - remove in production
   // useEffect(() => {
   //   const testEvents = async () => {
   //     await simulateSystemEvent("exercise_loaded");
@@ -274,7 +275,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
           key={message.id}
           content={message.content}
           timestamp={message.created_at}
-          sender={message.sender as "teacher" | "student"}
+          sender={message.sender}
         />
       );
     }
