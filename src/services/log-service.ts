@@ -1,144 +1,129 @@
+
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 
 export interface RouterLog {
   id: string;
-  created_at: string;
-  student_id: string;
-  log_type: string;
-  message: string;
-  metadata: any;
-  // Additional fields used in the application
-  source_ip: string;
-  content: Json;
   timestamp: string;
-  time_seconds: number;
-  raw_log?: string;
+  level: string;
+  message: string;
+  source: string;
+  details?: Record<string, any>;
 }
 
 export interface InteractionStatistic {
-  id: string;
-  log_type: string;
-  source_ip: string;
-  interaction_count: number;
-  last_interaction: string | null;
+  id: number;
+  date: string;
+  student_id: string;
+  interaction_type: string;
+  count: number;
 }
 
-export const fetchRouterLogs = async (
-  limit: number = 20,
-  offset: number = 0,
-  sortByLatest: boolean = true,
-): Promise<RouterLog[]> => {
+// Fetch the latest logs from the database
+export async function fetchLatestLogs(limit = 100): Promise<RouterLog[]> {
   try {
     const { data, error } = await supabase
-      .from("router_logs")
-      .select("*")
-      .order("timestamp", { ascending: !sortByLatest })
-      .range(offset, offset + limit - 1);
-    
-    if (error) throw error;
-    return data as RouterLog[];
-  } catch (error) {
-    console.error("Error fetching router logs:", error);
-    return [];
-  }
-};
-
-export const fetchLatestLogs = async (
-  limit: number = 20
-): Promise<RouterLog[]> => {
-  return fetchRouterLogs(limit, 0, true);
-};
-
-export const fetchLogsByStudentId = async (
-  studentId: string,
-  limit: number = 10
-): Promise<RouterLog[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("router_logs")
-      .select("*")
-      .eq("student_id", studentId)
-      .order("timestamp", { ascending: false })
+      .from('router_logs')
+      .select('*')
+      .order('timestamp', { ascending: false })
       .limit(limit);
+      
+    if (error) {
+      console.error("Error fetching logs:", error);
+      return [];
+    }
     
-    if (error) throw error;
-    return data as RouterLog[];
+    return data || [];
   } catch (error) {
-    console.error("Error fetching logs by student ID:", error);
+    console.error("Failed to fetch logs:", error);
     return [];
   }
-};
+}
 
-export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
+// Fetch interaction statistics
+export async function fetchInteractionStatistics(
+  studentId?: string,
+  startDate?: string,
+  endDate?: string
+): Promise<InteractionStatistic[]> {
   try {
-    // This function would typically call a stored procedure or view
-    // For now, we'll just aggregate the data manually
-    const { data, error } = await supabase
-      .from("router_logs")
-      .select("log_type, source_ip, timestamp")
-      .order("timestamp", { ascending: false });
+    let query = supabase
+      .from('interaction_statistics')
+      .select('*')
+      .order('date', { ascending: false });
+      
+    if (studentId) {
+      query = query.eq('student_id', studentId);
+    }
     
-    if (error) throw error;
+    if (startDate) {
+      query = query.gte('date', startDate);
+    }
     
-    // Group by log_type and source_ip
-    const statsMap = new Map<string, InteractionStatistic>();
+    if (endDate) {
+      query = query.lte('date', endDate);
+    }
     
-    (data || []).forEach((log: any) => {
-      const key = `${log.log_type}:${log.source_ip}`;
-      if (!statsMap.has(key)) {
-        statsMap.set(key, {
-          id: key,
-          log_type: log.log_type,
-          source_ip: log.source_ip,
-          interaction_count: 1,
-          last_interaction: log.timestamp
-        });
-      } else {
-        const stat = statsMap.get(key)!;
-        stat.interaction_count += 1;
-        // Keep the latest interaction
-        if (new Date(log.timestamp) > new Date(stat.last_interaction || "")) {
-          stat.last_interaction = log.timestamp;
-        }
+    const { data, error } = await query;
+    
+    if (error) {
+      console.error("Error fetching interaction statistics:", error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (error) {
+    console.error("Failed to fetch interaction statistics:", error);
+    return [];
+  }
+}
+
+// Mock data for logs when not connected to real backend
+export function getMockLogs(count = 20): RouterLog[] {
+  const levels = ["info", "warning", "error", "debug"];
+  const sources = ["system", "student", "admin", "headset"];
+  const messages = [
+    "User logged in",
+    "Connection established",
+    "Operation completed successfully",
+    "Resource not found",
+    "Permission denied",
+    "Process started",
+    "Data synchronized"
+  ];
+
+  return Array.from({ length: count }, (_, i) => {
+    const date = new Date();
+    date.setMinutes(date.getMinutes() - i * 5);
+    
+    return {
+      id: `log-${i}`,
+      timestamp: date.toISOString(),
+      level: levels[Math.floor(Math.random() * levels.length)],
+      message: messages[Math.floor(Math.random() * messages.length)],
+      source: sources[Math.floor(Math.random() * sources.length)],
+      details: {
+        user: `user-${Math.floor(Math.random() * 10)}`,
+        action: `action-${Math.floor(Math.random() * 5)}`
       }
-    });
-    
-    return Array.from(statsMap.values());
-  } catch (error) {
-    console.error("Error fetching interaction statistics:", error);
-    return [];
-  }
-};
+    };
+  });
+}
 
-export const createRouterLog = async (logData: any): Promise<RouterLog | null> => {
-  try {
-    const { data, error } = await supabase
-      .from("router_logs")
-      .insert([logData])
-      .select()
-      .single();
-    
-    if (error) throw error;
-    return data as RouterLog;
-  } catch (error) {
-    console.error("Error creating router log:", error);
-    return null;
-  }
-};
+// Mock interaction statistics
+export function getMockInteractionStatistics(count = 15): InteractionStatistic[] {
+  const interactionTypes = ["menu_open", "block_grab", "tool_use", "navigation"];
+  const studentIds = ["s-001", "s-002", "s-003", "s-004", "s-005"];
 
-// Alias for createRouterLog to match how it's called in StudentCardDemo.tsx
-export const createRouterLogs = createRouterLog;
-
-export const generateRandomLog = async (): Promise<RouterLog | null> => {
-  try {
-    // Call the generate_random_log RPC function
-    const { data, error } = await supabase.rpc("generate_random_log", {});
+  return Array.from({ length: count }, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(i / 3));
     
-    if (error) throw error;
-    return data as RouterLog;
-  } catch (error) {
-    console.error("Error generating random log:", error);
-    return null;
-  }
-};
+    return {
+      id: i + 1,
+      date: date.toISOString().split('T')[0],
+      student_id: studentIds[Math.floor(Math.random() * studentIds.length)],
+      interaction_type: interactionTypes[Math.floor(Math.random() * interactionTypes.length)],
+      count: Math.floor(Math.random() * 50) + 1
+    };
+  });
+}

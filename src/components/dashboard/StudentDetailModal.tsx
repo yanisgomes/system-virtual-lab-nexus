@@ -44,17 +44,7 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
     }
   });
   
-  // Early return AFTER initializing all hooks
-  if (!student) {
-    return null;
-  }
-
-  const { id, name, avatar, metrics } = student;
-  const fullName = name.split(" ");
-  const firstName = fullName[0] || "";
-  const lastName = fullName.slice(1).join(" ") || "";
-
-  // Update form values when student changes
+  // Update form values when student changes - putting useEffect before any conditionals
   useEffect(() => {
     if (student) {
       const fullName = student.name.split(" ");
@@ -69,6 +59,16 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
       });
     }
   }, [student, form]);
+
+  // Early return AFTER initializing all hooks
+  if (!student) {
+    return null;
+  }
+
+  const { id, name, avatar, metrics } = student;
+  const fullName = name.split(" ");
+  const firstName = fullName[0] || "";
+  const lastName = fullName.slice(1).join(" ") || "";
 
   // Handle form submission
   const onSubmit = (data: StudentFormValues) => {
