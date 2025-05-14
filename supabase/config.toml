@@ -1,14 +1,1 @@
-
 project_id = "xdzoslgjemunetuztrfg"
-
-[functions.router-logs]
-verify_jwt = false
-
-[api]
-enabled_schemas = ["public", "storage"]
-
-[realtime]
-enabled = true
-
-[realtime.postgres_changes]
-enabled = true
