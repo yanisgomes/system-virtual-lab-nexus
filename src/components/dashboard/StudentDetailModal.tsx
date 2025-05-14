@@ -33,7 +33,7 @@ type StudentFormValues = z.infer<typeof studentFormSchema>;
 const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps) => {
   const { toast } = useToast();
   
-  // Initialize form with default empty values - this ensures hooks are always called in the same order
+  // Initialize form with default empty values
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
     defaultValues: {
@@ -43,8 +43,8 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
       ipAddress: "",
     }
   });
-  
-  // Update form values when student changes - putting useEffect before any conditionals
+
+  // Update form values when student changes - coming before any conditionals
   useEffect(() => {
     if (student) {
       const fullName = student.name.split(" ");
@@ -60,16 +60,6 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
     }
   }, [student, form]);
 
-  // Early return AFTER initializing all hooks
-  if (!student) {
-    return null;
-  }
-
-  const { id, name, avatar, metrics } = student;
-  const fullName = name.split(" ");
-  const firstName = fullName[0] || "";
-  const lastName = fullName.slice(1).join(" ") || "";
-
   // Handle form submission
   const onSubmit = (data: StudentFormValues) => {
     // In a real application, this would save the data to the database
@@ -80,18 +70,24 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
     });
   };
 
+  // Early return AFTER initializing all hooks
+  if (!student) {
+    return null;
+  }
+
+  const { id, name, avatar, metrics } = student;
   const initials = name.split(" ").map((n) => n[0]).join("");
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto font-serif">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center gap-4 pb-2 border-b">
           <Avatar className="h-16 w-16">
             <AvatarImage src={avatar} alt={name} />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <DialogTitle className="text-2xl font-serif">{name}</DialogTitle>
+            <DialogTitle className="text-2xl">{name}</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground">
               Casque: {student.headset_id} | IP: {student.ip_address}
             </DialogDescription>
@@ -107,9 +103,9 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-serif">Prénom</FormLabel>
+                      <FormLabel>Prénom</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-serif" />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -120,9 +116,9 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-serif">Nom de famille</FormLabel>
+                      <FormLabel>Nom de famille</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-serif" />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -133,9 +129,9 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                   name="headsetName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-serif">Nom du casque</FormLabel>
+                      <FormLabel>Nom du casque</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-serif" />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
@@ -146,16 +142,16 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
                   name="ipAddress"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="font-serif">Adresse IP</FormLabel>
+                      <FormLabel>Adresse IP</FormLabel>
                       <FormControl>
-                        <Input {...field} className="font-serif" />
+                        <Input {...field} />
                       </FormControl>
                     </FormItem>
                   )}
                 />
               </div>
 
-              <Button type="submit" className="bg-[#7E69AB] hover:bg-[#655687] text-white font-serif">
+              <Button type="submit" className="bg-academic-primary hover:bg-academic-accent text-white">
                 Mettre à jour les informations
               </Button>
             </form>
@@ -166,20 +162,20 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
           <div className="grid grid-cols-3 gap-4 mb-6">
             <Card>
               <CardContent className="pt-6">
-                <Label className="text-sm text-muted-foreground font-serif">Attention</Label>
-                <div className="text-2xl font-bold font-serif mt-2">{metrics.attention}%</div>
+                <Label className="text-sm text-muted-foreground">Attention</Label>
+                <div className="text-2xl font-bold mt-2">{metrics.attention}%</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <Label className="text-sm text-muted-foreground font-serif">Engagement</Label>
-                <div className="text-2xl font-bold font-serif mt-2">{metrics.engagement}%</div>
+                <Label className="text-sm text-muted-foreground">Engagement</Label>
+                <div className="text-2xl font-bold mt-2">{metrics.engagement}%</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className="pt-6">
-                <Label className="text-sm text-muted-foreground font-serif">Interactions</Label>
-                <div className="text-2xl font-bold font-serif mt-2">
+                <Label className="text-sm text-muted-foreground">Interactions</Label>
+                <div className="text-2xl font-bold mt-2">
                   {metrics.interactionCounts.blockGrabs + metrics.interactionCounts.menuInteractions}
                 </div>
               </CardContent>
@@ -188,7 +184,7 @@ const StudentDetailModal = ({ student, open, onClose }: StudentDetailModalProps)
         </div>
 
         <div className="mt-6 border-t pt-6">
-          <h3 className="text-xl font-serif mb-4">Conversation</h3>
+          <h3 className="text-xl mb-4">Conversation</h3>
           <ChatTab student={{ id: student.id, name: student.name }} />
         </div>
       </DialogContent>

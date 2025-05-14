@@ -44,10 +44,10 @@ const Index = () => {
 
   if (isLoading && classrooms.length === 0) {
     return (
-      <div className="flex min-h-screen items-center justify-center font-serif bg-[#F8F9FA]">
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FA]">
         <div className="text-center">
-          <div className="h-10 w-10 border-4 border-t-[#7E69AB] rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground font-serif">Chargement des classes...</p>
+          <div className="h-10 w-10 border-4 border-t-academic-primary rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement des laboratoires...</p>
         </div>
       </div>
     );
@@ -55,7 +55,7 @@ const Index = () => {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-[#F8F9FA] font-serif">
+      <div className="flex min-h-screen w-full bg-[#F8F9FA]">
         <div className="bg-[#1A1F2C]">
           <ClassroomSidebar
             classrooms={classrooms}

@@ -71,7 +71,7 @@ const StudentCardDemo = () => {
   return (
     <div className="space-y-4">
       <div className="max-w-sm">
-        <h2 className="text-lg font-semibold mb-4">StudentCard Preview</h2>
+        <h2 className="text-lg font-semibold mb-4">Aperçu de la carte d'étudiant</h2>
         
         <div className="h-[250px]">
           <StudentCard 
@@ -82,7 +82,7 @@ const StudentCardDemo = () => {
       </div>
       
       <Card className="p-4 max-w-sm">
-        <h3 className="text-sm font-medium mb-3">Test Controls</h3>
+        <h3 className="text-sm font-medium mb-3">Contrôles de test</h3>
         <div className="space-y-2">
           <Button 
             variant="outline" 
@@ -90,7 +90,7 @@ const StudentCardDemo = () => {
             onClick={() => triggerTestEvent('MenuButtonPress')} 
             className="w-full"
           >
-            Simulate Interaction
+            Simuler une interaction
           </Button>
           
           <Button 
@@ -99,7 +99,7 @@ const StudentCardDemo = () => {
             onClick={() => triggerTestEvent('PortAdded')} 
             className="w-full"
           >
-            Simulate Port Added (+20%)
+            Simuler un port ajouté (+20%)
           </Button>
           
           <Button 
@@ -108,13 +108,13 @@ const StudentCardDemo = () => {
             onClick={() => triggerTestEvent('HelpRequest')} 
             className="w-full"
           >
-            Simulate Help Request
+            Simuler une demande d'aide
           </Button>
         </div>
       </Card>
       
       <div className="mt-8">
-        <h3 className="text-lg font-semibold mb-4">Grid Example</h3>
+        <h3 className="text-lg font-semibold mb-4">Exemple de grille</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 auto-rows-fr">
           {Array(3).fill(0).map((_, i) => (
             <StudentCard
@@ -122,7 +122,7 @@ const StudentCardDemo = () => {
               student={{
                 ...student,
                 id: `student-grid-${i+1}`,
-                name: `Student ${i+1}`,
+                name: `Étudiant ${i+1}`,
                 ip_address: `192.168.1.${101+i}`
               }}
               onClick={handleCardClick}

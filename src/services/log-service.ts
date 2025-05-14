@@ -1,5 +1,5 @@
-
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface RouterLog {
   id: string;
@@ -8,6 +8,11 @@ export interface RouterLog {
   message: string;
   source: string;
   details?: Record<string, any>;
+  // Map to DB schema fields
+  source_ip?: string;
+  log_type?: string;
+  content?: Json;
+  time_seconds?: number;
 }
 
 export interface InteractionStatistic {
@@ -16,6 +21,11 @@ export interface InteractionStatistic {
   student_id: string;
   interaction_type: string;
   count: number;
+  // Map to DB schema fields
+  source_ip?: string;
+  log_type?: string;
+  interaction_count?: number;
+  last_interaction?: string;
 }
 
 // Fetch the latest logs from the database
@@ -32,10 +42,47 @@ export async function fetchLatestLogs(limit = 100): Promise<RouterLog[]> {
       return [];
     }
     
-    return data || [];
+    // Map database fields to RouterLog interface
+    return data?.map(log => ({
+      id: log.id,
+      timestamp: log.timestamp,
+      level: log.log_type || 'info',
+      message: typeof log.content === 'object' ? JSON.stringify(log.content) : String(log.content),
+      source: log.source_ip,
+      details: typeof log.content === 'object' ? log.content : {},
+      // Keep original fields for backward compatibility
+      source_ip: log.source_ip,
+      log_type: log.log_type,
+      content: log.content,
+      time_seconds: log.time_seconds
+    })) || [];
   } catch (error) {
     console.error("Failed to fetch logs:", error);
     return [];
+  }
+}
+
+// Create a new router log
+export async function createRouterLog(logData: {
+  source_ip: string;
+  log_type: string;
+  content: any;
+  time_seconds: number;
+}): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('router_logs')
+      .insert(logData);
+      
+    if (error) {
+      console.error("Error creating log:", error);
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error("Failed to create log:", error);
+    return false;
   }
 }
 
@@ -46,31 +93,31 @@ export async function fetchInteractionStatistics(
   endDate?: string
 ): Promise<InteractionStatistic[]> {
   try {
-    let query = supabase
-      .from('interaction_statistics')
-      .select('*')
-      .order('date', { ascending: false });
+    // Since 'interaction_statistics' table might not exist, we'll aggregate from router_logs
+    const { data, error } = await supabase
+      .from('router_logs')
+      .select('source_ip, log_type, count(*) as interaction_count, max(timestamp) as last_interaction')
+      .group('source_ip, log_type')
+      .order('source_ip', { ascending: true });
       
-    if (studentId) {
-      query = query.eq('student_id', studentId);
-    }
-    
-    if (startDate) {
-      query = query.gte('date', startDate);
-    }
-    
-    if (endDate) {
-      query = query.lte('date', endDate);
-    }
-    
-    const { data, error } = await query;
-    
     if (error) {
       console.error("Error fetching interaction statistics:", error);
       return [];
     }
     
-    return data || [];
+    // Map to InteractionStatistic interface
+    return data?.map((item, index) => ({
+      id: index + 1,
+      date: new Date().toISOString().split('T')[0],
+      student_id: item.source_ip,
+      interaction_type: item.log_type,
+      count: item.interaction_count || 0,
+      // Keep original fields for backward compatibility
+      source_ip: item.source_ip,
+      log_type: item.log_type,
+      interaction_count: item.interaction_count,
+      last_interaction: item.last_interaction
+    })) || [];
   } catch (error) {
     console.error("Failed to fetch interaction statistics:", error);
     return [];

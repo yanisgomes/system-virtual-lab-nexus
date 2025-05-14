@@ -64,26 +64,25 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
                 vr: {
-                    purple: '#7E69AB', // Changed to match academic theme
-                    'light-purple': '#E5DEFF',
-                    'dark-purple': '#655687', // Darker version
-                    blue: '#0EA5E9',
-                    'sky-blue': '#33C3F0',
+                    navy: '#103c65', // Academic navy
+                    'light-blue': '#e6f1fa',
+                    'dark-navy': '#0a2540', // Darker version
+                    blue: '#0e71b3',
+                    'slate-blue': '#3a506b',
                     'dark-gray': '#1A1F2C',
                     gray: '#8E9196',
                     'light-gray': '#F8F9FA', // Lighter background for academic feel
                 },
                 academic: {
-                    primary: '#7E69AB',
-                    secondary: '#E5DEFF',
-                    accent: '#655687',
+                    primary: '#103c65',
+                    secondary: '#e6f1fa',
+                    accent: '#0a2540',
                     background: '#F8F9FA',
                     text: '#1A1F2C',
                     muted: '#8E9196',
                 }
 			},
 			fontFamily: {
-				'serif': ['Playfair Display', 'Georgia', 'serif'],
 				'sans': ['Inter', 'system-ui', 'sans-serif'],
 			},
 			borderRadius: {
