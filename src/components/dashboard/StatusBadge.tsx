@@ -1,13 +1,18 @@
 
 import { Badge } from "@/components/ui/badge";
 import { ActivityStatus } from "@/hooks/use-student-activity";
+import { LastExerciseEvent } from "./LastExerciseBadge";
 
 interface StatusBadgeProps {
   status: ActivityStatus;
   className?: string;
+  lastExerciseEvent?: LastExerciseEvent | null;
 }
 
-const StatusBadge = ({ status, className }: StatusBadgeProps) => {
+const StatusBadge = ({ status, className, lastExerciseEvent }: StatusBadgeProps) => {
+  // This component is maintained for backward compatibility but 
+  // should not be used directly anymore - use LastExerciseBadge instead
+  
   // Get appropriate style based on status
   const getBadgeStyle = () => {
     switch (status) {

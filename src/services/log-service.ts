@@ -1,34 +1,19 @@
-import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 
-export interface ActivityDataPoint {
-  time: number;
-  value: number;
-}
+import { supabase } from "@/integrations/supabase/client";
 
 export interface RouterLog {
-  id?: string;
   time_seconds: number;
   source_ip: string;
   log_type: string;
-  content: any;
-  timestamp?: string;
-  source?: string;
-  level?: string;
-  details?: any;
+  content: any; // Use a more specific type when possible
 }
 
-export interface InteractionStatistic {
-  id: number;
-  log_type?: string;
-  interaction_type?: string;
-  source_ip?: string;
-  student_id?: string;
-  interaction_count?: number;
-  count?: number;
-  last_interaction?: string;
+interface InteractionStatisticsResponse {
+  menu_interactions: number;
+  block_grabs: number;
 }
 
+// Create a new router log entry
 export const createRouterLog = async (log: RouterLog) => {
   try {
     const { data, error } = await supabase
@@ -37,113 +22,144 @@ export const createRouterLog = async (log: RouterLog) => {
       .select();
 
     if (error) {
-      console.error("Failed to create router log:", error);
-      return null;
+      console.error('Error creating router log:', error);
+      throw error;
     }
 
-    return data;
-  } catch (error) {
-    console.error("Failed to create router log:", error);
-    return null;
+    return data[0];
+  } catch (err) {
+    console.error('Error in createRouterLog:', err);
+    throw err;
   }
 };
 
-export const getStudentActivityHistory = async (studentId: string): Promise<ActivityDataPoint[]> => {
+// Fetch router logs by IP address with pagination
+export const fetchRouterLogsByIP = async (
+  ip: string,
+  page = 1,
+  limit = 20
+) => {
   try {
-    const { data, error } = await supabase
-      .from('activity_history')
-      .select()
-      .eq('student_id', studentId)
-      .order('timestamp');
+    const { data, error, count } = await supabase
+      .from('router_logs')
+      .select('*', { count: 'exact' })
+      .eq('source_ip', ip)
+      .order('time_seconds', { ascending: false })
+      .range((page - 1) * limit, page * limit - 1);
 
     if (error) {
-      console.error('Error fetching student activity history:', error);
-      return [];
+      console.error('Error fetching router logs:', error);
+      throw error;
     }
 
-    return data.map((item) => ({
-      time: item.timestamp,
-      value: item.value
-    }));
-  } catch (error) {
-    console.error('Failed to fetch student activity history:', error);
-    return [];
+    return { logs: data || [], total: count || 0 };
+  } catch (err) {
+    console.error('Error in fetchRouterLogsByIP:', err);
+    throw err;
   }
 };
 
-export const getRecentRouterLogs = async (minutes: number = 5): Promise<RouterLog[]> => {
-  const cutoff = new Date(Date.now() - minutes * 60 * 1000).toISOString();
-
+// Get recent activity logs by IP
+export const getRecentActivityByIP = async (ip: string, limit = 10) => {
   try {
     const { data, error } = await supabase
       .from('router_logs')
       .select('*')
-      .gte('timestamp', cutoff)
-      .order('timestamp', { ascending: false });
-
-    if (error) {
-      console.error("Error fetching recent router logs:", error);
-      return [];
-    }
-
-    return data || [];
-  } catch (error) {
-    console.error("Error fetching recent router logs:", error);
-    return [];
-  }
-};
-
-export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('router_logs')
-      .select('*')
-      .order('timestamp', { ascending: false })
+      .eq('source_ip', ip)
+      .order('time_seconds', { ascending: false })
       .limit(limit);
 
     if (error) {
-      console.error("Error fetching latest logs:", error);
-      return [];
+      console.error('Error fetching recent activity:', error);
+      throw error;
     }
 
     return data || [];
-  } catch (error) {
-    console.error("Error fetching latest logs:", error);
-    return [];
+  } catch (err) {
+    console.error('Error in getRecentActivityByIP:', err);
+    throw err;
   }
 };
 
-// Define the return type from the RPC function
-interface InteractionStatisticsResponse {
-  log_type: string;
-  source_ip: string;
-  count: string;
-  last_interaction?: string;
-}
-
-export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
+// Get interaction statistics for a specific IP
+export const getInteractionStatistics = async (ip: string): Promise<InteractionStatisticsResponse> => {
   try {
-    // Using raw SQL query instead of the unsupported .group() method
     const { data, error } = await supabase
-      .rpc('get_interaction_statistics') as { data: InteractionStatisticsResponse[] | null, error: any };
+      .rpc('get_interaction_statistics', { ip_address: ip }) as { data: InteractionStatisticsResponse, error: any };
 
     if (error) {
-      console.error("Error fetching interaction statistics:", error);
-      return [];
+      console.error('Error getting interaction statistics:', error);
+      // Return default values on error
+      return { menu_interactions: 0, block_grabs: 0 };
     }
 
-    // Format the results as needed
-    const formattedData = data ? data.map((item, index) => ({
-      id: index + 1,
-      log_type: item.log_type,
-      source_ip: item.source_ip,
-      count: Number(item.count), // Convert string to number
-      last_interaction: item.last_interaction || new Date().toISOString()
-    })) : [];
+    return data || { menu_interactions: 0, block_grabs: 0 };
+  } catch (err) {
+    console.error('Error in getInteractionStatistics:', err);
+    return { menu_interactions: 0, block_grabs: 0 };
+  }
+};
 
-    return formattedData;
-  } catch (error) {
-    console.error("Error fetching interaction statistics:", error);
-    return [];
+// Get interaction counts by type for a specific IP
+export const getInteractionsByType = async (ip: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('router_logs')
+      .select('log_type, count')
+      .eq('source_ip', ip)
+      .in('log_type', ['MenuOpen', 'MenuClose', 'BlockGrab', 'BlockRelease'])
+      .order('log_type');
+
+    if (error) {
+      console.error('Error getting interactions by type:', error);
+      // Return default structure on error
+      return [
+        { log_type: 'MenuOpen', count: 0 },
+        { log_type: 'MenuClose', count: 0 },
+        { log_type: 'BlockGrab', count: 0 },
+        { log_type: 'BlockRelease', count: 0 },
+      ];
+    }
+
+    return data || [];
+  } catch (err) {
+    console.error('Error in getInteractionsByType:', err);
+    throw err;
+  }
+};
+
+// Get recent activities for all students
+export const getAllStudentsActivity = async (limit = 5) => {
+  try {
+    // First, get all unique IPs
+    const { data: ips, error: ipError } = await supabase
+      .from('router_logs')
+      .select('source_ip')
+      .order('time_seconds', { ascending: false })
+      .limit(100);
+
+    if (ipError) {
+      console.error('Error fetching IPs:', ipError);
+      throw ipError;
+    }
+
+    // Get unique IPs
+    const uniqueIPs = [...new Set(ips?.map(item => item.source_ip))];
+
+    // For each IP, get their recent activities
+    const activities = await Promise.all(
+      uniqueIPs.map(async ip => {
+        const logs = await getRecentActivityByIP(ip, limit);
+        return {
+          ip,
+          logs,
+        };
+      })
+    );
+
+    return activities;
+  } catch (err) {
+    console.error('Error in getAllStudentsActivity:', err);
+    throw err;
   }
 };
