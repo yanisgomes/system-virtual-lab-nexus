@@ -56,13 +56,13 @@ export const getStudentActivityHistory = async (studentId: string): Promise<Acti
       .select()
       .eq('student_id', studentId)
       .order('timestamp');
-      
+
     if (error) {
       console.error('Error fetching student activity history:', error);
       return [];
     }
-    
-    return data.map(item => ({
+
+    return data.map((item) => ({
       time: item.timestamp,
       value: item.value
     }));
@@ -116,23 +116,25 @@ export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> 
 
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
   try {
+    // Using raw SQL query instead of the unsupported .group() method
     const { data, error } = await supabase
-      .from('router_logs')
-      .select('log_type, source_ip, count(*)')
-      .group('log_type, source_ip');
+      .rpc('get_interaction_statistics');
 
     if (error) {
       console.error("Error fetching interaction statistics:", error);
       return [];
     }
 
-    return data.map((item, index) => ({
+    // Format the results as needed
+    const formattedData = data ? data.map((item: any, index: number) => ({
       id: index + 1,
       log_type: item.log_type,
       source_ip: item.source_ip,
-      count: item.count,
-      last_interaction: new Date().toISOString() // This is a placeholder, would need real data
-    })) || [];
+      count: parseInt(item.count),
+      last_interaction: item.last_interaction || new Date().toISOString()
+    })) : [];
+
+    return formattedData;
   } catch (error) {
     console.error("Error fetching interaction statistics:", error);
     return [];
