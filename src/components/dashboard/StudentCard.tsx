@@ -2,11 +2,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Student } from "@/services/dashboard-data";
-import { MouseEventHandler, memo } from "react";
+import { MouseEventHandler, memo, useEffect } from "react";
 import ActivityBeacon from "./ActivityBeacon";
-import StatusBadge from "./StatusBadge";
 import TaskProgressBar from "./TaskProgressBar";
 import { useStudentActivity } from "@/hooks/use-student-activity";
+import LastExerciseBadge from "./LastExerciseBadge";
+import { useChatMessages } from "@/hooks/useChatMessages";
 
 interface StudentCardProps {
   student: Student;
@@ -17,13 +18,18 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
   const { name, headset_id, ip_address, avatar } = student;
   
   const {
-    status,
     lastActivityTime,
-    inactiveTime,
     taskProgress,
     helpRequested,
     acknowledgeHelp
   } = useStudentActivity(ip_address);
+  
+  // Get student messages to extract latest exercise
+  const { messages, isLoading } = useChatMessages(student.id);
+  
+  // Find the latest exercise message
+  const latestExerciseMessage = isLoading ? null : 
+    messages.find(msg => msg.type === "exercise_loaded" || msg.type === "exercise_finished") || null;
 
   const initials = name
     .split(" ")
@@ -62,9 +68,9 @@ const StudentCard = memo(({ student, onClick }: StudentCardProps) => {
           />
         </div>
 
-        {/* Status Badge - centered below avatar row */}
-        <StatusBadge 
-          status={status} 
+        {/* Last Exercise Badge - replaces the status badge */}
+        <LastExerciseBadge 
+          lastExerciseMessage={latestExerciseMessage}
           className="self-center mx-auto"
         />
         

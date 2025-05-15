@@ -1,13 +1,10 @@
 
-import { useEffect, useRef, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { fetchMessages, sendTeacherMessage, Message, SystemExerciseData, SystemFinishedData } from "@/services/message-service";
+import { useEffect, useRef } from "react";
+import { useChatMessages } from "@/hooks/useChatMessages";
 import ChatMessageBubble from "./ChatMessageBubble";
 import ChatInput from "./ChatInput";
 import ExerciseMessageCard from "./ExerciseMessageCard";
-import { toast } from "@/components/ui/use-toast";
-import { createRouterLog, RouterLog } from "@/services/log-service";
+import { Message } from "@/services/message-service";
 
 interface ChatTabProps {
   student: {
@@ -18,235 +15,26 @@ interface ChatTabProps {
 
 const ChatTab = ({ student }: ChatTabProps) => {
   const messageContainerRef = useRef<HTMLDivElement>(null);
-  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
-  const queryClient = useQueryClient();
-
-  // Fetch messages
-  const { data: messages = [], isLoading } = useQuery({
-    queryKey: ["messages", student.id],
-    queryFn: () => fetchMessages(student.id),
-    refetchOnWindowFocus: false,
-  });
-
-  // Send message mutation
-  const { mutate, isPending: isSending } = useMutation({
-    mutationFn: sendTeacherMessage,
-    onMutate: async (newMessage) => {
-      // Optimistic update
-      const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
-        student_id: newMessage.student_id,
-        sender: "teacher",
-        content: newMessage.content,
-        created_at: new Date().toISOString(),
-        type: "chat"
-      };
-      
-      setOptimisticMessages(prev => [optimisticMessage, ...prev]);
-      return { optimisticMessage };
-    },
-    onSuccess: (data, variables) => {
-      // Push server-confirmed message into cache
-      queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
-        return [data, ...old];
-      });
-      
-      // Remove the matching optimistic message
-      setOptimisticMessages(prev => 
-        prev.filter(msg => msg.content !== variables.content)
-      );
-    },
-    onError: (error, variables, context) => {
-      console.error("Failed to send message:", error);
-      // Remove the optimistic message on error
-      if (context?.optimisticMessage) {
-        setOptimisticMessages(prev => 
-          prev.filter(msg => msg.id !== context.optimisticMessage.id)
-        );
-      }
-    },
-  });
+  
+  // Use our custom hook to manage chat messages
+  const { 
+    messages: allMessages,
+    isLoading,
+    isSending,
+    sendMessage
+  } = useChatMessages(student.id);
 
   // Handle sending a message
   const handleSendMessage = (content: string) => {
-    mutate({ student_id: student.id, content });
+    sendMessage(content);
   };
-
-  // Set up realtime subscription for router logs to capture system events
-  useEffect(() => {
-    const processRouterLog = async (payload: any) => {
-      const log = payload.new as RouterLog;
-      
-      // Only process if this log belongs to the current student
-      // Note: This assumes there's a mapping between source_ip and student_id
-      // In a real implementation, you'd need to check if this log is for this student
-      
-      // Look for NewExerciseLoaded events
-      if (log.log_type === 'NewExerciseLoaded' && log.content) {
-        try {
-          console.log("Exercise loaded:", log.content);
-          const exerciseData = typeof log.content === 'string' ? 
-            JSON.parse(log.content) as SystemExerciseData : 
-            log.content as SystemExerciseData;
-            
-          // Add the message to the student's chat
-          // In a real implementation, you would call the addNewExerciseLoadedMessage function
-          // Here we're just simulating the arrival in the UI
-          queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
-            const newMessage: Message = {
-              id: `exercise-${Date.now()}`,
-              student_id: student.id,
-              sender: "system",
-              content: `Exercice chargé: ${exerciseData.systemName}`,
-              created_at: new Date().toISOString(),
-              type: "exercise_loaded",
-              metadata: exerciseData
-            };
-            return [newMessage, ...old];
-          });
-          
-          toast({
-            title: "Nouvel exercice chargé",
-            description: `${exerciseData.systemName} a été chargé`,
-          });
-        } catch (error) {
-          console.error("Error processing NewExerciseLoaded event:", error);
-        }
-      }
-      
-      // Look for SystemFinished events
-      if (log.log_type === 'SystemFinished' && log.content) {
-        try {
-          console.log("System finished:", log.content);
-          const finishedData = typeof log.content === 'string' ? 
-            JSON.parse(log.content) as SystemFinishedData : 
-            log.content as SystemFinishedData;
-            
-          // Add the message to the student's chat
-          // In a real implementation, you would call the addSystemFinishedMessage function
-          queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
-            const newMessage: Message = {
-              id: `finished-${Date.now()}`,
-              student_id: student.id,
-              sender: "system",
-              content: `Exercice terminé: ${finishedData.systemName}`,
-              created_at: new Date().toISOString(),
-              type: "exercise_finished",
-              metadata: finishedData
-            };
-            return [newMessage, ...old];
-          });
-          
-          toast({
-            title: "Exercice terminé",
-            description: `${finishedData.systemName} a été terminé`,
-          });
-        } catch (error) {
-          console.error("Error processing SystemFinished event:", error);
-        }
-      }
-    };
-
-    // Subscribe to router logs
-    const channel = supabase
-      .channel('router_logs')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'router_logs'
-        },
-        processRouterLog
-      )
-      .subscribe();
-
-    // Set up realtime subscription for new messages
-    const messagesChannel = supabase
-      .channel('messages')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `student_id=eq.${student.id}`
-        },
-        (payload) => {
-          console.log("New message received:", payload);
-          // Update the query cache with the new message
-          queryClient.setQueryData<Message[]>(["messages", student.id], (old = []) => {
-            const exists = old.some(m => m.id === payload.new.id);
-            return exists ? old : [payload.new as Message, ...old];
-          });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(messagesChannel);
-    };
-  }, [student.id, queryClient]);
-
-  // Simulate system events for testing purposes
-  const simulateSystemEvent = async (type: "exercise_loaded" | "exercise_finished") => {
-    let log: RouterLog;
-    
-    if (type === "exercise_loaded") {
-      const exerciseData: SystemExerciseData = {
-        systemName: "Système électrique",
-        systemDesc: "Exploration d'un système électrique basique",
-        systemDiff: "2",
-        requiredLinks: 5
-      };
-      
-      log = {
-        time_seconds: Math.floor(Date.now() / 1000),
-        source_ip: "192.168.1.100",
-        log_type: "NewExerciseLoaded",
-        content: exerciseData
-      };
-    } else {
-      const finishedData: SystemFinishedData = {
-        systemName: "Système électrique",
-        systemDesc: "Exploration d'un système électrique basique",
-        systemDiff: "2",
-        correctLinks: 4,
-        incorrectLinks: 1
-      };
-      
-      log = {
-        time_seconds: Math.floor(Date.now() / 1000),
-        source_ip: "192.168.1.100",
-        log_type: "SystemFinished",
-        content: finishedData
-      };
-    }
-    
-    await createRouterLog(log);
-  };
-
-  // For development testing only - remove in production
-  // useEffect(() => {
-  //   const testEvents = async () => {
-  //     await simulateSystemEvent("exercise_loaded");
-  //     setTimeout(async () => {
-  //       await simulateSystemEvent("exercise_finished");
-  //     }, 5000);
-  //   };
-  //   testEvents();
-  // }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
     if (messageContainerRef.current) {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
-  }, [messages, optimisticMessages]);
-
-  // Combine server messages with optimistic messages
-  const allMessages = [...optimisticMessages, ...messages];
+  }, [allMessages]);
 
   // Function to render the appropriate message component based on type
   const renderMessage = (message: Message) => {
@@ -256,7 +44,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
           key={message.id}
           type="exercise_loaded"
           timestamp={message.created_at}
-          data={message.metadata as SystemExerciseData}
+          data={message.metadata}
         />
       );
     } else if (message.type === "exercise_finished" && message.metadata) {
@@ -265,7 +53,7 @@ const ChatTab = ({ student }: ChatTabProps) => {
           key={message.id}
           type="exercise_finished"
           timestamp={message.created_at}
-          data={message.metadata as SystemFinishedData}
+          data={message.metadata}
         />
       );
     } else {

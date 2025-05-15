@@ -113,19 +113,11 @@ export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> 
   }
 };
 
-// Define the return type from the RPC function
-interface InteractionStatisticsResponse {
-  log_type: string;
-  source_ip: string;
-  count: string;
-  last_interaction?: string;
-}
-
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
   try {
-    // Using raw SQL query instead of the unsupported .group() method
+    // Using RPC instead of direct SQL query
     const { data, error } = await supabase
-      .rpc('get_interaction_statistics') as { data: InteractionStatisticsResponse[] | null, error: any };
+      .rpc('get_interaction_statistics');
 
     if (error) {
       console.error("Error fetching interaction statistics:", error);
@@ -133,7 +125,7 @@ export const fetchInteractionStatistics = async (): Promise<InteractionStatistic
     }
 
     // Format the results as needed
-    const formattedData = data ? data.map((item, index) => ({
+    const formattedData = data ? data.map((item: any, index: number) => ({
       id: index + 1,
       log_type: item.log_type,
       source_ip: item.source_ip,
