@@ -115,25 +115,9 @@ export const fetchLatestLogs = async (limit: number = 20): Promise<RouterLog[]> 
 
 export const fetchInteractionStatistics = async (): Promise<InteractionStatistic[]> => {
   try {
-    // Using RPC instead of direct SQL query
-    const { data, error } = await supabase
-      .rpc('get_interaction_statistics');
-
-    if (error) {
-      console.error("Error fetching interaction statistics:", error);
-      return [];
-    }
-
-    // Format the results as needed
-    const formattedData = data ? data.map((item: any, index: number) => ({
-      id: index + 1,
-      log_type: item.log_type,
-      source_ip: item.source_ip,
-      count: Number(item.count), // Convert string to number
-      last_interaction: item.last_interaction || new Date().toISOString()
-    })) : [];
-
-    return formattedData;
+    // Temporarily return empty array since RPC function may not exist
+    // TODO: Implement proper interaction statistics query
+    return [];
   } catch (error) {
     console.error("Error fetching interaction statistics:", error);
     return [];

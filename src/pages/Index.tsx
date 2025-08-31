@@ -1,16 +1,20 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import ClassroomSidebar from "@/components/dashboard/ClassroomSidebar";
 import ClassroomDashboard from "@/components/dashboard/ClassroomDashboard";
 import { fetchClassrooms, Classroom } from "@/services/dashboard-data";
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
 const Index = () => {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selectedClassroom, setSelectedClassroom] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadClassrooms = async () => {
@@ -63,7 +67,16 @@ const Index = () => {
             onSelectClassroom={handleClassroomChange}
           />
         </div>
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto relative">
+          <Button
+            onClick={() => navigate('/logs')}
+            className="absolute top-4 right-4 z-10"
+            variant="outline"
+            size="sm"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Journaux
+          </Button>
           {selectedClassroom && (
             <ClassroomDashboard classroomId={selectedClassroom} />
           )}

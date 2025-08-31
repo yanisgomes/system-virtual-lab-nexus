@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 import { 
   fetchLatestLogs, 
   fetchInteractionStatistics,
@@ -34,12 +35,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Logs = () => {
   const [viewLimit, setViewLimit] = useState<number>(20);
+  const navigate = useNavigate();
   
   // Fetch logs data
   const { 
@@ -113,7 +115,17 @@ const Logs = () => {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <h1 className="text-3xl font-bold mb-8">SysVL Nexus - Journal de diagnostic</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold">SysVL Nexus - Journal de diagnostic</h1>
+        <Button
+          onClick={() => navigate('/')}
+          variant="outline"
+          size="sm"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Retour
+        </Button>
+      </div>
       
       <div className="mb-8 flex justify-between items-center">
         <div>
