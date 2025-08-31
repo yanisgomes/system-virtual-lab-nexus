@@ -18,9 +18,9 @@ const ClassroomSidebar = ({
   return (
     <Sidebar className="border-r border-vr-light-gray">
       <SidebarHeader className="flex items-center h-16 px-4 border-b border-vr-light-gray">
-        <h1 className="text-xl font-bold text-white flex items-center gap-2">
-          <span className="text-academic-primary">SysVL</span>
-          <span>Nexus</span>
+        <h1 className="text-xl font-bold text-sidebar-foreground flex items-center gap-2">
+          <span className="text-sidebar-primary">SysVL</span>
+          <span className="text-sidebar-foreground/90">Nexus</span>
         </h1>
       </SidebarHeader>
       
