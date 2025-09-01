@@ -26,11 +26,28 @@ export async function createExercise(input: CreateExerciseInput) {
     layout_json: (input.layout ?? null) as unknown as Json,
   };
 
-  const { data, error } = await supabase
+  // First try with layout_json; fallback without if column doesn't exist yet
+  let { data, error } = await supabase
     .from("exercises")
     .insert(payload)
     .select("id")
     .single();
+
+  if (error && /layout_json/i.test(error.message || "")) {
+    const fallback: TablesInsert<"exercises"> = {
+      title: input.title,
+      description: input.description,
+      diff: input.diff,
+      system_json: input.system as unknown as Json,
+    } as any;
+    const res = await supabase
+      .from("exercises")
+      .insert(fallback)
+      .select("id")
+      .single();
+    data = res.data as any;
+    error = res.error as any;
+  }
 
   if (error) {
     throw new Error(`Failed to create exercise: ${error.message}`);
@@ -81,11 +98,20 @@ export async function createAssignAndEnqueue(input: CreateExerciseInput, student
 }
 
 export async function getExerciseById(exerciseId: string) {
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("exercises")
     .select("id, title, description, diff, system_json, layout_json")
     .eq("id", exerciseId)
     .single();
+  if (error && /layout_json/i.test(error.message || "")) {
+    const res = await supabase
+      .from("exercises")
+      .select("id, title, description, diff, system_json")
+      .eq("id", exerciseId)
+      .single();
+    if (res.error) throw new Error(res.error.message);
+    return { ...res.data, layout_json: null } as any;
+  }
   if (error) throw new Error(error.message);
   return data;
 }
@@ -101,7 +127,7 @@ export async function updateExercise(
       `Validation échouée: ${validation.issues.map((i) => `${i.path || ''} ${i.message}`).join("; ")}`
     );
   }
-  const { error } = await supabase
+  let { error } = await supabase
     .from("exercises")
     .update({
       title,
@@ -111,7 +137,15 @@ export async function updateExercise(
       layout_json: (layout ?? null) as unknown as Json,
     })
     .eq("id", exerciseId);
-  if (error) throw new Error(error.message);
+  if (error && /layout_json/i.test(error.message || "")) {
+    const res = await supabase
+      .from("exercises")
+      .update({ title, description, diff, system_json: system as unknown as Json })
+      .eq("id", exerciseId);
+    if (res.error) throw new Error(res.error.message);
+  } else if (error) {
+    throw new Error(error.message);
+  }
   return true;
 }
 

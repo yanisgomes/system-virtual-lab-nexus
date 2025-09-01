@@ -188,6 +188,7 @@ export type Database = {
           description: string
           diff: string
           system_json: Json
+          layout_json?: Json | null
           created_at: string
         }
         Insert: {
@@ -196,6 +197,7 @@ export type Database = {
           description: string
           diff: string
           system_json: Json
+          layout_json?: Json | null
           created_at?: string
         }
         Update: {
@@ -204,6 +206,7 @@ export type Database = {
           description?: string
           diff?: string
           system_json?: Json
+          layout_json?: Json | null
           created_at?: string
         }
         Relationships: []
