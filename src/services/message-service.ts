@@ -73,18 +73,29 @@ export const sendTeacherMessage = async ({ student_id, content }: Omit<MessageIn
   try {
     if (!content.trim()) return null;
     
-    const { data, error } = await supabase
+    // Try insert with optional columns first
+    let { data, error } = await supabase
       .from("messages")
       .insert({ student_id, sender: 'teacher' as const, content, type: 'chat' })
       .select()
       .single();
+
+    // Fallback: if the table doesn't have the optional 'type' column, reinsert without it
+    if (error && /type/i.test(error.message || "")) {
+      const res = await supabase
+        .from("messages")
+        .insert({ student_id, sender: 'teacher' as const, content })
+        .select()
+        .single();
+      data = res.data as any;
+      error = res.error as any;
+    }
 
     if (error) {
       console.error("Error sending message:", error);
       throw new Error(`Failed to send message: ${error.message}`);
     }
 
-    // Cast the returned data to ensure it matches our expected type
     return data as Message;
   } catch (err) {
     console.error("Error in sendTeacherMessage:", err);
@@ -100,7 +111,8 @@ export const addSystemExerciseMessage = async (
   metadata: SystemExerciseData | SystemFinishedData
 ): Promise<Message | null> => {
   try {
-    const { data, error } = await supabase
+    // Attempt with type/metadata first
+    let { data, error } = await supabase
       .from("messages")
       .insert({ 
         student_id: studentId, 
@@ -111,6 +123,17 @@ export const addSystemExerciseMessage = async (
       })
       .select()
       .single();
+
+    // Fallback: table may not have these optional columns
+    if (error && (/type/i.test(error.message || "") || /metadata/i.test(error.message || ""))) {
+      const res = await supabase
+        .from("messages")
+        .insert({ student_id: studentId, sender: 'system', content })
+        .select()
+        .single();
+      data = res.data as any;
+      error = res.error as any;
+    }
 
     if (error) {
       console.error("Error adding system message:", error);
