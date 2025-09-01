@@ -7,6 +7,7 @@ export interface CreateExerciseInput {
   description: string;
   diff: "1" | "2" | "3" | "4";
   system: SystemDef;
+  layout?: Record<string, { x: number; y: number }>; // editor-only, not sent to headset
 }
 
 export async function createExercise(input: CreateExerciseInput) {
@@ -22,6 +23,7 @@ export async function createExercise(input: CreateExerciseInput) {
     description: input.description,
     diff: input.diff,
     system_json: input.system as unknown as Json,
+    layout_json: (input.layout ?? null) as unknown as Json,
   };
 
   const { data, error } = await supabase
@@ -81,15 +83,19 @@ export async function createAssignAndEnqueue(input: CreateExerciseInput, student
 export async function getExerciseById(exerciseId: string) {
   const { data, error } = await supabase
     .from("exercises")
-    .select("id, title, description, diff, system_json")
+    .select("id, title, description, diff, system_json, layout_json")
     .eq("id", exerciseId)
     .single();
   if (error) throw new Error(error.message);
   return data;
 }
 
-export async function updateExercise(exerciseId: string, input: CreateExerciseInput["system"]) {
-  const validation = validateSystemDef(input);
+export async function updateExercise(
+  exerciseId: string,
+  update: { title: string; description: string; diff: "1" | "2" | "3" | "4"; system: CreateExerciseInput["system"]; layout?: Record<string, { x: number; y: number }> }
+) {
+  const { system, layout, title, description, diff } = update;
+  const validation = validateSystemDef(system);
   if (!validation.ok) {
     throw new Error(
       `Validation échouée: ${validation.issues.map((i) => `${i.path || ''} ${i.message}`).join("; ")}`
@@ -97,9 +103,33 @@ export async function updateExercise(exerciseId: string, input: CreateExerciseIn
   }
   const { error } = await supabase
     .from("exercises")
-    .update({ system_json: input as unknown as Json })
+    .update({
+      title,
+      description,
+      diff,
+      system_json: system as unknown as Json,
+      layout_json: (layout ?? null) as unknown as Json,
+    })
     .eq("id", exerciseId);
   if (error) throw new Error(error.message);
   return true;
+}
+
+export interface ExerciseSummary {
+  id: string;
+  title: string;
+  description: string;
+  diff: string;
+  created_at: string;
+}
+
+export async function listExercises(limit: number = 20): Promise<ExerciseSummary[]> {
+  const { data, error } = await supabase
+    .from("exercises")
+    .select("id, title, description, diff, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data || []) as ExerciseSummary[];
 }
 

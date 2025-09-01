@@ -11,6 +11,7 @@ const Index = () => {
 
   return (
     <div className="relative">
+      
       <Button
         onClick={() => navigate('/logs')}
         className="absolute top-4 right-4 z-10"

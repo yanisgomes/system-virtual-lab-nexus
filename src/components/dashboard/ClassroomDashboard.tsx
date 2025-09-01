@@ -10,6 +10,8 @@ import { RaisedHandProvider } from "@/contexts/RaisedHandContext";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { useEffect as useEffectReact, useState as useStateReact } from "react";
+import { listExercises, ExerciseSummary } from "@/services/exercise-service";
 
 interface ClassroomDashboardProps {
   classroomId: string;
@@ -31,6 +33,17 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const navigate = useNavigate();
+  const [exercises, setExercises] = useStateReact<ExerciseSummary[]>([]);
+  useEffectReact(() => {
+    (async () => {
+      try {
+        const items = await listExercises(20);
+        setExercises(items);
+      } catch (e) {
+        // noop
+      }
+    })();
+  }, []);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -118,19 +131,20 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
                   <div className="text-xs text-slate-500">Open the full editor</div>
                 </div>
               </button>
-              {/* Placeholder: map existing exercises here when available */}
-              {/* Example exercise card */}
-              <div className="min-w-[260px] h-[140px] rounded-lg border bg-white shadow hover:shadow-md transition-shadow p-4 shrink-0 cursor-pointer"
-                   onClick={() => navigate('/exercise/new')}>
-                <div className="flex items-start justify-between">
-                  <div className="font-medium">Sample Exercise</div>
-                  <Badge variant="secondary">1</Badge>
+              {exercises.map((ex) => (
+                <div key={ex.id}
+                     className="min-w-[260px] h-[140px] rounded-lg border bg-white shadow hover:shadow-md transition-shadow p-4 shrink-0 cursor-pointer"
+                     onClick={() => navigate(`/exercise/${ex.id}`)}>
+                  <div className="flex items-start justify-between">
+                    <div className="font-medium">{ex.title}</div>
+                    <Badge variant="secondary">{ex.diff}</Badge>
+                  </div>
+                  <div className="text-sm text-slate-600 mt-2 line-clamp-2">
+                    {ex.description}
+                  </div>
+                  <div className="text-right mt-4 text-slate-400 text-xs">Open editor →</div>
                 </div>
-                <div className="text-sm text-slate-600 mt-2 line-clamp-2">
-                  Description d'exemple pour illustrer la carte.
-                </div>
-                <div className="text-right mt-4 text-slate-400 text-xs">Open editor →</div>
-              </div>
+              ))}
             </div>
           </div>
         </div>

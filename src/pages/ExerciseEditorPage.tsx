@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Plus, Trash, ArrowLeft, ArrowRight, ArrowUp, ArrowDown } from "lucide-react";
 import { BlockDef, PortDef, SystemDef, validateSystemDef } from "@/lib/system-schema";
 import { getExerciseById, updateExercise, createAssignAndEnqueue } from "@/services/exercise-service";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExerciseEditorPageProps {
   mode: "create" | "edit";
@@ -39,9 +40,10 @@ export default function ExerciseEditorPage({ mode }: ExerciseEditorPageProps) {
         setDescription(data.description);
         setDiff((data.diff as any) || "1");
         // Seed default positions if absent
+        const layoutMap = (data as any).layout_json || {};
         const seeded = (system.blocks || []).map((b, i) => ({
           ...b,
-          position: { x: 80 + i * 40, y: 80 + i * 40 },
+          position: layoutMap[b.id] ?? { x: 80 + i * 40, y: 80 + i * 40 },
         }));
         setBlocks(seeded as any);
       }
@@ -102,10 +104,11 @@ export default function ExerciseEditorPage({ mode }: ExerciseEditorPageProps) {
   const handleSave = async () => {
     try {
       setIsSaving(true);
+      const layout = Object.fromEntries(blocks.map(b => [b.id, { x: b.position.x, y: b.position.y }]));
       if (mode === "edit" && exerciseId) {
-        await updateExercise(exerciseId, system);
+        await updateExercise(exerciseId, { title, description, diff, system, layout });
       } else {
-        await createAssignAndEnqueue({ title, description, diff, system }, []);
+        await createAssignAndEnqueue({ title, description, diff, system, layout }, []);
       }
       navigate("/");
     } catch (e: any) {
@@ -195,6 +198,9 @@ export default function ExerciseEditorPage({ mode }: ExerciseEditorPageProps) {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={() => navigate('/')}> 
+            <ArrowLeft className="h-4 w-4 mr-1" /> Retour au tableau de bord
+          </Button>
           {editingTitle ? (
             <input
               className="text-2xl font-extrabold border rounded px-2 h-10"
@@ -366,7 +372,24 @@ export default function ExerciseEditorPage({ mode }: ExerciseEditorPageProps) {
                               const targetBlock = blocks.find(bb => bb.id === targetBlockId);
                               const matchIdx = targetBlock ? targetBlock.out_ports.findIndex(pp => pp.type === p.type && pp.dir !== p.dir) : -1;
                               setConnections(prev => ({ ...prev, [`${b.id}:${i}`]: { targetBlockId, targetIdx: Math.max(0, matchIdx) } }));
+                              // update current port target (should be out port typically)
                               updatePort(b.id, i, { target: targetBlockId });
+                              // Also auto-backfill on the matched incoming port: set its target to source block
+                              if (targetBlock) {
+                                setBlocks(prev => prev.map(bb => {
+                                  if (bb.id !== targetBlockId) return bb;
+                                  const idx = (matchIdx >= 0 ? matchIdx : bb.out_ports.findIndex(pp => pp.type === p.type && pp.dir !== p.dir));
+                                  if (idx < 0) return bb;
+                                  const ports = bb.out_ports.slice();
+                                  const tp = ports[idx];
+                                  // Only set if the matched port is incoming and hasn't target yet
+                                  if (tp && tp.dir === (p.dir === 'out' ? 'in' : 'out')) {
+                                    ports[idx] = { ...tp, target: b.id } as PortDef;
+                                    return { ...bb, out_ports: ports } as any;
+                                  }
+                                  return bb;
+                                }));
+                              }
                             }}
                           >
                             <SelectTrigger><SelectValue placeholder="Select target" /></SelectTrigger>
@@ -396,6 +419,28 @@ export default function ExerciseEditorPage({ mode }: ExerciseEditorPageProps) {
           ))}
         </div>
       </ScrollArea>
+
+      {!validation.ok && (
+        <Card className="border-red-200">
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm text-red-700">
+              Erreurs de validation ({validation.issues.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ScrollArea className="h-40">
+              <ul className="space-y-2">
+                {validation.issues.map((i, idx) => (
+                  <li key={idx} className="text-sm rounded border border-red-100 bg-red-50/60 px-3 py-2">
+                    <div className="font-mono text-xs text-slate-600">{i.path || "(racine)"}</div>
+                    <div className="text-red-700">{i.message}</div>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

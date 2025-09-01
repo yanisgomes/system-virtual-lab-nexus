@@ -10,7 +10,9 @@ export const PortDefSchema = z.object({
   pos: z.enum(["L", "R", "T", "B"], {
     required_error: "La position du port est requise (L/R/T/B)",
   }),
-  target: z.string().min(1, "La cible du port est requise"),
+  // La cible est requise uniquement pour les ports sortants. Pour les ports "in",
+  // elle est optionnelle et peut être déduite de la connexion opposée.
+  target: z.string().optional(),
 });
 
 export type PortDef = z.infer<typeof PortDefSchema>;
@@ -64,11 +66,22 @@ export function validateSystemDef(input: unknown): ValidationResult {
   const blockIds = new Set(system.blocks.map((b) => b.id));
   system.blocks.forEach((block, bIdx) => {
     block.out_ports.forEach((port, pIdx) => {
-      if (!blockIds.has(port.target)) {
-        issues.push({
-          path: `blocks[${bIdx}].out_ports[${pIdx}].target`,
-          message: `Cible inconnue: ${port.target}`,
-        });
+      // Pour les ports sortants, la cible est obligatoire et doit exister
+      if (port.dir === "out") {
+        if (!port.target || !blockIds.has(port.target)) {
+          issues.push({
+            path: `blocks[${bIdx}].out_ports[${pIdx}].target`,
+            message: `Cible invalide ou manquante pour un port sortant`,
+          });
+        }
+      } else if (port.target) {
+        // Pour les ports entrants, si une cible est fournie, elle doit être valide
+        if (!blockIds.has(port.target)) {
+          issues.push({
+            path: `blocks[${bIdx}].out_ports[${pIdx}].target`,
+            message: `Cible inconnue: ${port.target}`,
+          });
+        }
       }
     });
   });
