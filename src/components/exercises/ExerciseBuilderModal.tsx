@@ -1,14 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Plus, Trash } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import { BlockDef, PortDef, SystemDef, computeSystemStats, validateSystemDef } from "@/lib/system-schema";
 import { Student } from "@/services/dashboard-data";
 import { createAssignAndEnqueue } from "@/services/exercise-service";
@@ -22,8 +17,9 @@ interface ExerciseBuilderModalProps {
 
 type Step = 0 | 1 | 2 | 3 | 4; // Metadata, Blocks, Ports, Review, Assign
 
-export default function ExerciseBuilderModal({ open, onOpenChange, students }: ExerciseBuilderModalProps) {
+export default function ExerciseBuilderModal({ open, onOpenChange }: ExerciseBuilderModalProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [step, setStep] = useState<Step>(0);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -66,7 +62,7 @@ export default function ExerciseBuilderModal({ open, onOpenChange, students }: E
   };
 
   const addBlock = () => {
-    const newBlock: BlockDef = { id: uuidv4(), title: "", desc: "", out_ports: [] };
+    const newBlock: BlockDef = { id: crypto.randomUUID(), title: "", desc: "", out_ports: [] };
     setBlocks((prev) => [...prev, newBlock]);
   };
 
@@ -135,7 +131,7 @@ export default function ExerciseBuilderModal({ open, onOpenChange, students }: E
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Créer un exercice système</DialogTitle>
+          <DialogTitle>Redirection vers l'éditeur</DialogTitle>
         </DialogHeader>
 
         {/* Stepper header */}
@@ -180,99 +176,7 @@ export default function ExerciseBuilderModal({ open, onOpenChange, students }: E
           </div>
         )}
 
-        {step === 1 && (
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">Blocs</h3>
-              <Button variant="outline" size="sm" onClick={addBlock}><Plus className="h-4 w-4 mr-1" />Ajouter un bloc</Button>
-            </div>
-            {blocks.length === 0 && <p className="text-sm text-slate-500">Aucun bloc</p>}
-            {blocks.map((b) => (
-              <Card key={b.id}>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="text-base">Bloc</CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => removeBlock(b.id)}>
-                    <Trash className="h-4 w-4 text-destructive" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  <div>
-                    <Label>Titre</Label>
-                    <Input value={b.title} onChange={(e) => setBlocks((prev) => prev.map((x) => x.id === b.id ? { ...x, title: e.target.value } : x))} />
-                  </div>
-                  <div>
-                    <Label>Description</Label>
-                    <Textarea value={b.desc} onChange={(e) => setBlocks((prev) => prev.map((x) => x.id === b.id ? { ...x, desc: e.target.value } : x))} />
-                  </div>
-                  <div>
-                    <Button variant="outline" size="sm" onClick={() => addPort(b.id)}><Plus className="h-4 w-4 mr-1" />Ajouter un port</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4">
-            {blocks.map((b) => (
-              <Card key={b.id}>
-                <CardHeader>
-                  <CardTitle className="text-base">Ports du bloc {b.title || b.id}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {b.out_ports.length === 0 && <p className="text-sm text-slate-500">Aucun port</p>}
-                  {b.out_ports.map((p, i) => (
-                    <div key={i} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                      <div>
-                        <Label>Type</Label>
-                        <Select value={p.type} onValueChange={(v) => updatePort(b.id, i, { type: v as PortDef["type"] })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="E">E</SelectItem>
-                            <SelectItem value="I">I</SelectItem>
-                            <SelectItem value="M">M</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Direction</Label>
-                        <Select value={p.dir} onValueChange={(v) => updatePort(b.id, i, { dir: v as PortDef["dir"] })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="in">in</SelectItem>
-                            <SelectItem value="out">out</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Position</Label>
-                        <Select value={p.pos} onValueChange={(v) => updatePort(b.id, i, { pos: v as PortDef["pos"] })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="L">L</SelectItem>
-                            <SelectItem value="R">R</SelectItem>
-                            <SelectItem value="T">T</SelectItem>
-                            <SelectItem value="B">B</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label>Cible (id de bloc)</Label>
-                        <Input value={p.target} onChange={(e) => updatePort(b.id, i, { target: e.target.value })} />
-                      </div>
-                      <div className="flex items-end">
-                        <Button variant="ghost" className="text-destructive" onClick={() => removePort(b.id, i)}>
-                          <Trash className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+        <div className="py-6 text-sm text-slate-600">Ce dialogue n'est plus utilisé. Vous allez être redirigé vers l'éditeur complet.</div>
 
         {step === 3 && (
           <div className="space-y-4">

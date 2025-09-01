@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash, Plus, Minus } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import { SystemExercise, SystemExerciseBlock, SystemExercisePort } from "./SystemExerciseCard";
 
 interface SystemExerciseModalProps {
@@ -55,7 +54,7 @@ const SystemExerciseModal = ({
   
   const addBlock = () => {
     const newBlock: SystemExerciseBlock = {
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       title: "",
       desc: "",
       out_ports: []

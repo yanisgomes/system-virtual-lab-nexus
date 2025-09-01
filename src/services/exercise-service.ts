@@ -78,3 +78,28 @@ export async function createAssignAndEnqueue(input: CreateExerciseInput, student
   return exerciseId;
 }
 
+export async function getExerciseById(exerciseId: string) {
+  const { data, error } = await supabase
+    .from("exercises")
+    .select("id, title, description, diff, system_json")
+    .eq("id", exerciseId)
+    .single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function updateExercise(exerciseId: string, input: CreateExerciseInput["system"]) {
+  const validation = validateSystemDef(input);
+  if (!validation.ok) {
+    throw new Error(
+      `Validation échouée: ${validation.issues.map((i) => `${i.path || ''} ${i.message}`).join("; ")}`
+    );
+  }
+  const { error } = await supabase
+    .from("exercises")
+    .update({ system_json: input as unknown as Json })
+    .eq("id", exerciseId);
+  if (error) throw new Error(error.message);
+  return true;
+}
+

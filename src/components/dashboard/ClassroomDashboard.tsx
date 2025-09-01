@@ -7,8 +7,9 @@ import StudentDetailModal from "./StudentDetailModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { RaisedHandProvider } from "@/contexts/RaisedHandContext";
-import ExerciseBuilderModal from "@/components/exercises/ExerciseBuilderModal";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 interface ClassroomDashboardProps {
   classroomId: string;
@@ -29,7 +30,7 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
   });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isCreateExerciseOpen, setIsCreateExerciseOpen] = useState(false);
+  const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -107,9 +108,30 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
             Surveillez en temps réel l'activité du laboratoire virtuel et l'engagement des étudiants
           </p>
           <div className="mt-4">
-            <Button variant="default" onClick={() => setIsCreateExerciseOpen(true)}>
-              Créer un exercice
-            </Button>
+            <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+              <button
+                className="min-w-[260px] h-[140px] rounded-lg border-2 border-dashed flex items-center justify-center shrink-0 hover:bg-slate-50"
+                onClick={() => navigate('/exercise/new')}
+              >
+                <div className="text-center">
+                  <div className="text-lg font-semibold">+ Create an exercise</div>
+                  <div className="text-xs text-slate-500">Open the full editor</div>
+                </div>
+              </button>
+              {/* Placeholder: map existing exercises here when available */}
+              {/* Example exercise card */}
+              <div className="min-w-[260px] h-[140px] rounded-lg border bg-white shadow hover:shadow-md transition-shadow p-4 shrink-0 cursor-pointer"
+                   onClick={() => navigate('/exercise/new')}>
+                <div className="flex items-start justify-between">
+                  <div className="font-medium">Sample Exercise</div>
+                  <Badge variant="secondary">1</Badge>
+                </div>
+                <div className="text-sm text-slate-600 mt-2 line-clamp-2">
+                  Description d'exemple pour illustrer la carte.
+                </div>
+                <div className="text-right mt-4 text-slate-400 text-xs">Open editor →</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -183,11 +205,7 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
           open={isModalOpen}
           onClose={closeModal}
         />
-        <ExerciseBuilderModal
-          open={isCreateExerciseOpen}
-          onOpenChange={setIsCreateExerciseOpen}
-          students={students}
-        />
+        
       </div>
     </RaisedHandProvider>
   );

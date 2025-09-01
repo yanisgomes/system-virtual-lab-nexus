@@ -11,3 +11,4 @@ create table if not exists public.exercise_dispatch_queue (
 
 create index if not exists exercise_dispatch_queue_status_idx on public.exercise_dispatch_queue (status);
 create index if not exists exercise_dispatch_queue_student_idx on public.exercise_dispatch_queue (student_id);
+

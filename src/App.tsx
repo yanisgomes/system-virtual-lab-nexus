@@ -9,6 +9,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Logs from "./pages/Logs";
 import NotFound from "./pages/NotFound";
+import ExerciseEditorPage from "@/pages/ExerciseEditorPage";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<AppLayout><Index /></AppLayout>} />
             <Route path="/logs" element={<AppLayout><Logs /></AppLayout>} />
+            <Route path="/exercise/new" element={<AppLayout><ExerciseEditorPage mode="create" /></AppLayout>} />
+            <Route path="/exercise/:exerciseId" element={<AppLayout><ExerciseEditorPage mode="edit" /></AppLayout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
