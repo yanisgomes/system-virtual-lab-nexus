@@ -7,6 +7,8 @@ import StudentDetailModal from "./StudentDetailModal";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { RaisedHandProvider } from "@/contexts/RaisedHandContext";
+import ExerciseBuilderModal from "@/components/exercises/ExerciseBuilderModal";
+import { Button } from "@/components/ui/button";
 
 interface ClassroomDashboardProps {
   classroomId: string;
@@ -27,6 +29,7 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
   });
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateExerciseOpen, setIsCreateExerciseOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -103,6 +106,11 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
           <p className="text-muted-foreground">
             Surveillez en temps réel l'activité du laboratoire virtuel et l'engagement des étudiants
           </p>
+          <div className="mt-4">
+            <Button variant="default" onClick={() => setIsCreateExerciseOpen(true)}>
+              Créer un exercice
+            </Button>
+          </div>
         </div>
 
         {/* Student Metrics grid - moved to the top */}
@@ -174,6 +182,11 @@ const ClassroomDashboard = ({ classroomId }: ClassroomDashboardProps) => {
           student={selectedStudent}
           open={isModalOpen}
           onClose={closeModal}
+        />
+        <ExerciseBuilderModal
+          open={isCreateExerciseOpen}
+          onOpenChange={setIsCreateExerciseOpen}
+          students={students}
         />
       </div>
     </RaisedHandProvider>

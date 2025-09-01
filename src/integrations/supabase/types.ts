@@ -150,6 +150,8 @@ export type Database = {
           id: string
           sender: string
           student_id: string | null
+          type: string | null
+          metadata: Json | null
         }
         Insert: {
           content: string
@@ -157,6 +159,8 @@ export type Database = {
           id?: string
           sender: string
           student_id?: string | null
+          type?: string | null
+          metadata?: Json | null
         }
         Update: {
           content?: string
@@ -164,6 +168,8 @@ export type Database = {
           id?: string
           sender?: string
           student_id?: string | null
+          type?: string | null
+          metadata?: Json | null
         }
         Relationships: [
           {
@@ -173,6 +179,117 @@ export type Database = {
             referencedRelation: "students"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      exercises: {
+        Row: {
+          id: string
+          title: string
+          description: string
+          diff: string
+          system_json: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description: string
+          diff: string
+          system_json: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string
+          diff?: string
+          system_json?: Json
+          created_at?: string
+        }
+        Relationships: []
+      }
+      student_exercises: {
+        Row: {
+          id: string
+          student_id: string
+          exercise_id: string
+          assigned_at: string
+          status: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          exercise_id: string
+          assigned_at?: string
+          status?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          exercise_id?: string
+          assigned_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_exercises_student_id_fkey",
+            columns: ["student_id"],
+            isOneToOne: false,
+            referencedRelation: "students",
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "student_exercises_exercise_id_fkey",
+            columns: ["exercise_id"],
+            isOneToOne: false,
+            referencedRelation: "exercises",
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      exercise_dispatch_queue: {
+        Row: {
+          id: string
+          exercise_id: string
+          student_id: string
+          status: string
+          error: string | null
+          created_at: string
+          sent_at: string | null
+        }
+        Insert: {
+          id?: string
+          exercise_id: string
+          student_id: string
+          status?: string
+          error?: string | null
+          created_at?: string
+          sent_at?: string | null
+        }
+        Update: {
+          id?: string
+          exercise_id?: string
+          student_id?: string
+          status?: string
+          error?: string | null
+          created_at?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_dispatch_queue_student_id_fkey",
+            columns: ["student_id"],
+            isOneToOne: false,
+            referencedRelation: "students",
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_dispatch_queue_exercise_id_fkey",
+            columns: ["exercise_id"],
+            isOneToOne: false,
+            referencedRelation: "exercises",
+            referencedColumns: ["id"]
+          }
         ]
       }
       router_logs: {
